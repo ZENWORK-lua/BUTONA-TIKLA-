@@ -84,7 +84,8 @@
   </div>
 
   <script>
-    const DB_URL = "https://kvdb.io/2XN7Z3mQ8W2vL4y9X6p1kG/global_clicker_v5";
+    // Tamamen kesintisiz, ücretsiz public veri depolama köprüsü (API Key istemez)
+    const DB_URL = "https://jsonbin.org/sino_apex_class_room_v1";
     
     let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
     localStorage.setItem('dev_id', deviceId);
@@ -184,7 +185,7 @@
       });
     }
 
-    // Geliştirilmiş Akıllı Veri Birleştirme (Smart Merge)
+    // Gelişmiş Akıllı Veri Birleştirme (Smart Merge) Mekanizması
     async function syncData() {
       if (!userName) return;
       try {
@@ -193,13 +194,17 @@
         if (res.ok) {
           const text = await res.text();
           if (text) {
-            try { list = JSON.parse(text); } catch (err) { list = []; }
+            try { 
+              const parsed = JSON.parse(text);
+              if (Array.isArray(parsed)) list = parsed;
+              else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
+            } catch (err) { list = []; }
           }
         }
 
         if (!Array.isArray(list)) list = [];
 
-        // Cihaz ID'sine göre var olan kaydı güncelle veya yenisini ekle
+        // Cihaz kimliği ile listede var mı kontrol et, varsa güncelle, yoksa ekle
         const idx = list.findIndex(i => i.id === deviceId);
         if (idx !== -1) {
           list[idx].score = count;
@@ -208,14 +213,14 @@
           list.push({ id: deviceId, name: userName, score: count });
         }
 
-        // Puanlara göre büyükten küçüğe sırala
+        // Puan sıralaması (Büyükten küçüğe)
         list.sort((a, b) => b.score - a.score);
 
-        // Küresel havuza gönder
+        // Ortak köprüye gönder
         await fetch(DB_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(list.slice(0, 50))
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ list: list.slice(0, 50) })
         });
       } catch (err) {}
     }
@@ -226,14 +231,18 @@
         const res = await fetch(DB_URL);
         if (!res.ok) throw new Error();
         const text = await res.text();
-        let list = text ? JSON.parse(text) : [];
+        let list = [];
+        if (text) {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) list = parsed;
+          else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
+        }
 
         if (!Array.isArray(list) || list.length === 0) {
           container.innerHTML = `<div class="text-center text-white/40 py-8">Henüz kayıt yok. Tıklamaya başla!</div>`;
           return;
         }
 
-        // Cihaz ID'leri gizlenir, sadece isimler, skorlar ve sıralama gösterilir
         container.innerHTML = list.map((item, i) => `
           <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'}">
             <div class="flex items-center gap-3">
