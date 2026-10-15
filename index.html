@@ -3,219 +3,441 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Apex Clicker // Siber Rekabet</title>
+  <title>Apex // Sıvı Cam Arayüzü</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    * { select-none: none; -webkit-user-select: none; }
-    body { background-color: #030712; color: #f3f4f6; overflow: hidden; touch-action: manipulation; font-family: system-ui, -apple-system, sans-serif; }
-
-    /* Canvas Arka Plan */
-    #space-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
-
-    /* Glassmorphism Panel */
-    .glass { background: rgba(17, 24, 39, 0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-
-    /* 3D Buton Stili ve Fiziği */
-    .btn-3d {
-      background: linear-gradient(145deg, var(--theme-accent-light), var(--theme-accent-dark));
-      box-shadow: 0 12px 0 var(--theme-shadow), 0 20px 30px rgba(0,0,0,0.5);
-      transition: all 0.05s ease;
-    }
-    .btn-3d:active {
-      transform: translateY(8px);
-      box-shadow: 0 4px 0 var(--theme-shadow), 0 10px 15px rgba(0,0,0,0.4);
-    }
-
-    /* Sıfırlama Kutusu Animasyonu */
-    .reset-container { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-
-    /* Temalar */
     :root {
-      --theme-accent-light: #10b981;
-      --theme-accent-dark: #047857;
-      --theme-shadow: #064e3b;
-      --theme-text: #34d399;
+      /* Varsayılan Tema: Kozmik Titreşim (Mor/Pembe) */
+      --theme-rgb: 168, 85, 247; 
+      --theme-glow: rgba(168, 85, 247, 0.4);
     }
-    body[data-theme="pink"] {
-      --theme-accent-light: #ec4899;
-      --theme-accent-dark: #be185d;
-      --theme-shadow: #831843;
-      --theme-text: #f472b6;
+    
+    * { select-none: none; -webkit-user-select: none; box-sizing: border-box; }
+    body { background-color: #02040a; color: #f3f4f6; overflow: hidden; touch-action: manipulation; font-family: system-ui, -apple-system, sans-serif; }
+
+    /* --- UZAY / YILDIZ ARKA PLANI --- */
+    #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+
+    /* --- CAM / SIVI METERYAL (VISION OS STİLİ) --- */
+    .glass-icon {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(24px) saturate(150%);
+      -webkit-backdrop-filter: blur(24px) saturate(150%);
+      border: 1px solid rgba(var(--theme-rgb), 0.3);
+      box-shadow: inset 0 0 12px rgba(var(--theme-rgb), 0.1), 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
     }
-    body[data-theme="blue"] {
-      --theme-accent-light: #3b82f6;
-      --theme-accent-dark: #1d4ed8;
-      --theme-shadow: #1e3a8a;
-      --theme-text: #60a5fa;
+    .glass-icon:active { transform: scale(0.92); border-color: rgba(var(--theme-rgb), 0.8); }
+
+    /* --- DİNAMİK ADA (ANA BUTON / PANEL) --- */
+    #hero-island {
+      background: radial-gradient(130% 130% at 50% 0%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid rgba(var(--theme-rgb), 0.4);
+      box-shadow: 
+        inset 0 1px 1px rgba(255, 255, 255, 0.2), 
+        inset 0 -2px 10px rgba(var(--theme-rgb), 0.1), 
+        0 10px 40px rgba(var(--theme-rgb), 0.2);
+      transition: all 0.65s cubic-bezier(0.32, 0.72, 0, 1);
+      position: relative;
+      overflow: hidden;
     }
-    body[data-theme="amber"] {
-      --theme-accent-light: #f59e0b;
-      --theme-accent-dark: #b45309;
-      --theme-shadow: #78350f;
-      --theme-text: #fbbf24;
+
+    /* Mod 1: Tıklama Dairesi */
+    .island-circle {
+      width: 14rem; height: 14rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; justify-content: center; align-items: center;
     }
+    .island-circle:active {
+      transform: scale(0.96);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(var(--theme-rgb), 0.3), 0 5px 20px rgba(var(--theme-rgb), 0.1);
+    }
+
+    /* Mod 2: Genişletilmiş Menü Dikdörtgeni */
+    .island-panel {
+      width: 22rem; min-height: 26rem;
+      border-radius: 2rem;
+      cursor: default;
+      padding: 1.5rem;
+      display: flex; flex-direction: column;
+    }
+
+    /* --- SAYACIN AŞAĞI YUMUŞAK KAYMASI --- */
+    #counter-container {
+      transition: transform 0.65s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    /* --- EFEKTLER --- */
+    /* İkon Uçma Animasyonu */
+    .flying-icon {
+      position: fixed; z-index: 100;
+      transition: transform 0.6s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.6s;
+    }
+
+    /* Parıltı / Dalga (Shimmer) Efekti */
+    .shimmer-wave {
+      position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transform: skewX(-20deg);
+      pointer-events: none;
+    }
+    .animate-shimmer { animation: sweep 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    @keyframes sweep { 100% { left: 200%; } }
+
+    /* Temaların İçeri Akma Animasyonu (Staggered Fade) */
+    .stagger-item {
+      opacity: 0; transform: translateY(15px);
+      animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUpFade { 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+
+    /* Özel Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(var(--theme-rgb), 0.5); border-radius: 4px; }
   </style>
 </head>
-<body data-theme="emerald" class="h-screen w-screen relative flex flex-col items-center justify-between p-6">
+<body class="w-screen h-screen relative flex justify-center">
 
-  <!-- Arka Plan Uzay Parçacık Canvası -->
   <canvas id="space-canvas"></canvas>
 
-  <!-- ÜST BAR: Liderlik & Tema Değiştirici -->
-  <header class="w-full max-w-md flex justify-between items-center z-10">
-    <button onclick="openLeaderboard()" class="glass px-4 py-2.5 rounded-2xl flex items-center gap-2 border border-white/10 hover:border-white/20 active:scale-95 transition-all">
-      <span class="text-lg">🏆</span>
-      <span class="text-xs font-bold tracking-wider font-mono text-white">LİDERLİK TABLOSU</span>
+  <!-- ÜST SABİT BUTONLAR -->
+  <div class="absolute top-8 w-full px-8 flex justify-between z-20 pointer-events-none max-w-md mx-auto">
+    <!-- Liderlik (Orta-Sol) -->
+    <button id="btn-leaderboard" onclick="triggerMorph(this, 'leaderboard')" class="glass-icon w-12 h-12 rounded-2xl flex items-center justify-center text-xl pointer-events-auto">
+      🏆
     </button>
+    <!-- Temalar (Orta-Sağ) -->
+    <button id="btn-themes" onclick="triggerMorph(this, 'themes')" class="glass-icon w-12 h-12 rounded-2xl flex items-center justify-center text-xl pointer-events-auto">
+      🎨
+    </button>
+  </div>
 
-    <!-- Tema Seçici Açılır Menü -->
-    <select id="theme-select" onchange="changeTheme(this.value)" class="glass px-3 py-2 rounded-2xl text-xs font-mono font-bold text-white outline-none border border-white/10 cursor-pointer">
-      <option value="emerald" class="bg-gray-900 text-emerald-400">🌲 Zümrüt Derinliği</option>
-      <option value="pink" class="bg-gray-900 text-pink-400">🌸 Pembe Kuvars</option>
-      <option value="blue" class="bg-gray-900 text-blue-400">🌊 Gece Safiri</option>
-      <option value="amber" class="bg-gray-900 text-amber-400">✨ Kehribar Işıltısı</option>
-    </select>
-  </header>
-
-  <!-- ORTA ALAN: Sayaç & 3D Buton -->
-  <main class="w-full max-w-md flex flex-col items-center justify-center z-10 my-auto gap-8">
+  <!-- MERKEZ ALAN (Buton ve Sayaç Flex Grubu) -->
+  <main class="relative z-10 flex flex-col items-center justify-center h-full w-full max-w-md gap-6">
     
-    <!-- Sayaç Göstergesi -->
-    <div class="text-center space-y-1">
-      <p class="text-xs font-mono uppercase tracking-widest text-white/40">Mevcut Tıklama</p>
-      <div id="counter" class="text-6xl font-black font-mono tracking-tight transition-all duration-75" style="color: var(--theme-text);">
-        0
+    <!-- Dinamik Ada (Tıklama Dairesi / Panel) -->
+    <div id="hero-island" class="island-circle" onmousedown="handleMainClick()" ontouchstart="handleMainClick(event)">
+      <!-- Sadece panel modunda görünecek içerik alanı -->
+      <div id="island-content" class="w-full h-full hidden flex-col"></div>
+      
+      <!-- Merkezi Yıldırım/Güç İkonu (Daire modunda) -->
+      <div id="hero-icon" class="text-6xl text-white drop-shadow-[0_0_15px_rgba(var(--theme-rgb),0.8)] pointer-events-none transition-opacity duration-300">
+        ⚡
       </div>
     </div>
 
-    <!-- 3D Ana Buton -->
-    <div id="click-btn" onmousedown="handleClick()" ontouchstart="handleClick(event)" class="btn-3d w-48 h-48 rounded-full flex items-center justify-center cursor-pointer select-none relative">
-      <span class="text-4xl pointer-events-none">⚡</span>
-    </div>
-
-    <!-- AutoClicker Uyarı Mesajı -->
-    <div id="warning-box" class="hidden glass bg-red-500/20 border-red-500/50 text-red-300 px-4 py-2.5 rounded-2xl text-xs font-mono text-center animate-bounce">
-      🚫 Makro/AutoClicker algılandı! 5 saniye bekleyin.
+    <!-- Sayaç (Panel açılınca doğal olarak Flex ile aşağı kayar) -->
+    <div id="counter-container" class="text-center transition-all">
+      <div id="counter" class="text-[5rem] leading-none font-black font-mono tracking-tighter" style="text-shadow: 0 0 30px rgba(var(--theme-rgb), 0.6); color: rgb(var(--theme-rgb));">
+        0
+      </div>
+      <p class="text-[10px] font-mono tracking-[0.3em] text-white/30 uppercase mt-2">Enerji Seviyesi</p>
     </div>
 
   </main>
 
-  <!-- ALT ALAN: Akıllı Sıfırlama Butonu -->
-  <footer class="w-full max-w-md z-10 flex flex-col items-center mb-2">
-    <div id="reset-wrapper" class="reset-container w-full flex justify-center">
-      <button id="reset-init-btn" onclick="expandReset()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-6 py-2.5 rounded-2xl text-xs font-mono font-bold tracking-wider active:scale-95 transition-all">
-        SAYACI SIFIRLA
-      </button>
+  <!-- ALT SABİT BUTON (Sıfırlama) -->
+  <div class="absolute bottom-10 w-full flex justify-center z-20 pointer-events-none">
+    <button id="btn-reset" onclick="triggerMorph(this, 'reset')" class="glass-icon w-14 h-14 rounded-3xl flex items-center justify-center text-xl text-red-400 pointer-events-auto border-red-500/30">
+      ⟲
+    </button>
+  </div>
 
-      <!-- Dönüşen Onay Kutusu (Başlangıçta Gizli) -->
-      <div id="reset-confirm-box" class="hidden glass border-red-500/40 p-4 rounded-3xl w-full flex flex-col items-center gap-3 text-center">
-        <p class="text-xs text-red-200 font-mono font-semibold">Sayacı sıfırlamak istediğinize emin misiniz?</p>
-        <div class="flex gap-2 w-full">
-          <button onclick="confirmReset()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl text-xs font-mono font-bold">EVET, SIFIRLA</button>
-          <button onclick="collapseReset()" class="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-xs font-mono font-bold">İPTAL</button>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- LİDERLİK TABLOSU MODAL -->
-  <div id="leaderboard-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-    <div class="glass w-full max-w-md p-6 rounded-3xl flex flex-col max-h-[80vh] border border-white/15">
-      <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-        <h3 class="text-lg font-bold font-mono text-white flex items-center gap-2">🏆 Liderlik Tablosu</h3>
-        <button onclick="closeLeaderboard()" class="text-white/50 hover:text-white font-mono text-xl">✕</button>
-      </div>
-
-      <!-- Kullanıcı İsim Alanı -->
-      <div id="name-input-section" class="mb-4 hidden">
-        <p class="text-xs text-white/60 mb-2 font-mono">Sıralamaya girmek için isminizi girin:</p>
-        <div class="flex gap-2">
-          <input id="user-name-input" type="text" maxlength="15" placeholder="İsminiz..." class="bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-400 flex-1 font-mono">
-          <button onclick="saveUserName()" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold px-4 py-2 rounded-xl text-xs font-mono">Kaydet</button>
-        </div>
-      </div>
-
-      <!-- Liste Container -->
-      <div id="leaderboard-list" class="flex-1 overflow-y-auto space-y-2 pr-1 font-mono text-xs">
-        <div class="text-center text-white/40 py-8">Yükleniyor...</div>
-      </div>
-    </div>
+  <!-- AutoClicker Uyarısı -->
+  <div id="warning-box" class="absolute top-24 left-1/2 transform -translate-x-1/2 glass-icon bg-red-900/40 border-red-500/50 text-red-200 px-6 py-3 rounded-2xl text-xs font-mono z-50 hidden opacity-0 transition-opacity">
+    SİSTEM KİLİTLENDİ: İnsanüstü Hız Algılandı!
   </div>
 
   <script>
-    /* Global Depo URL */
+    /* -------------------------------------------------------------------------- */
+    /* 1. MİMARİ VE VERİ YÖNETİMİ */
+    /* -------------------------------------------------------------------------- */
     const DB_URL = "https://kvdb.io/4y9X6p1kG9xN7Z3mQ8W2vL/apex_leaderboard";
-
-    /* Cihaz ID & Kullanıcı Durumu */
-    let deviceId = localStorage.getItem('apex_device_id') || crypto.randomUUID();
-    localStorage.setItem('apex_device_id', deviceId);
-
-    let count = parseInt(localStorage.getItem('apex_click_count') || '0');
-    let userName = localStorage.getItem('apex_user_name') || '';
-
-    /* Tıklama Hızı & AutoClicker Mantığı */
+    let deviceId = localStorage.getItem('apx_id') || crypto.randomUUID();
+    localStorage.setItem('apx_id', deviceId);
+    let count = parseInt(localStorage.getItem('apx_cnt') || '0');
+    let userName = localStorage.getItem('apx_name') || '';
+    
+    let isPanelOpen = false;
     let clickTimestamps = [];
     let isBlocked = false;
 
-    /* Web Audio API - Rahatlatıcı Klik Sesi */
+    // Arayüz Elementleri
+    const heroIsland = document.getElementById('hero-island');
+    const heroIcon = document.getElementById('hero-icon');
+    const islandContent = document.getElementById('island-content');
+    const counterEl = document.getElementById('counter');
+    counterEl.innerText = count.toLocaleString('tr-TR');
+
+    const themes = [
+      { id: '1', name: 'Kozmik Titreşim', rgb: '168, 85, 247', icon: '🌌' },
+      { id: '2', name: 'Sıvı Zümrüt', rgb: '16, 185, 129', icon: '🌲' },
+      { id: '3', name: 'Okyanus Yakamozu', rgb: '56, 189, 248', icon: '🌊' },
+      { id: '4', name: 'Güneş Fırtınası', rgb: '245, 158, 11', icon: '☄️' },
+      { id: '5', name: 'Buzul Ateşi', rgb: '226, 232, 240', icon: '❄️' },
+      { id: '6', name: 'Karanlık Madde', rgb: '71, 85, 105', icon: '🌑' },
+      { id: '7', name: 'Şeftali Bulutu', rgb: '251, 146, 60', icon: '🍑' },
+      { id: '8', name: 'Sonsuzluk Yakutu', rgb: '225, 29, 72', icon: '♦️' }
+    ];
+
+    // Cihazın temasını yükle
+    let currentTheme = localStorage.getItem('apx_theme') || '168, 85, 247';
+    document.documentElement.style.setProperty('--theme-rgb', currentTheme);
+
+    /* Ses Motoru (Sadece tıklama dairesiyken çalışır) */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playClickSound() {
+    function playLiquidClick() {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.04);
-      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.04);
+      osc.stop(audioCtx.currentTime + 0.05);
     }
 
-    /* UI Güncelleme */
-    const counterEl = document.getElementById('counter');
-    counterEl.innerText = count.toLocaleString('tr-TR');
+    /* -------------------------------------------------------------------------- */
+    /* 2. DİNAMİK ADA (MORPH) VE GÖRSEL FİZİK ANİMASYONLARI */
+    /* -------------------------------------------------------------------------- */
 
-    /* Tıklama Fonksiyonu */
-    function handleClick(e) {
+    function triggerMorph(buttonEl, menuType) {
+      if (isPanelOpen) return; // Zaten açıksa işlem yapma
+      isPanelOpen = true;
+
+      // 1. Uçan İkon Animasyonu
+      const rect = buttonEl.getBoundingClientRect();
+      const clone = buttonEl.cloneNode(true);
+      clone.className = buttonEl.className + ' flying-icon';
+      clone.style.left = rect.left + 'px';
+      clone.style.top = rect.top + 'px';
+      clone.style.margin = '0';
+      document.body.appendChild(clone);
+
+      // Ada merkezini bul
+      const islandRect = heroIsland.getBoundingClientRect();
+      const centerX = islandRect.left + (islandRect.width / 2) - (rect.width / 2);
+      const centerY = islandRect.top + (islandRect.height / 2) - (rect.height / 2);
+
+      // Frame atla ve animasyonu başlat
+      requestAnimationFrame(() => {
+        clone.style.transform = `translate(${centerX - rect.left}px, ${centerY - rect.top}px) rotate(720deg) scale(0.2)`;
+        clone.style.opacity = '0';
+      });
+
+      // 2. İkon hedefe ulaştığında...
+      setTimeout(() => {
+        clone.remove();
+        
+        // Şimmer Efekti Tetikle
+        const shimmer = document.createElement('div');
+        shimmer.className = 'shimmer-wave animate-shimmer';
+        heroIsland.appendChild(shimmer);
+        setTimeout(() => shimmer.remove(), 700);
+
+        // Adayı Genişlet (Morph)
+        heroIcon.style.opacity = '0';
+        heroIsland.classList.remove('island-circle');
+        heroIsland.classList.add('island-panel');
+
+        // İçeriği Gecikmeli Yükle
+        setTimeout(() => {
+          heroIcon.classList.add('hidden');
+          islandContent.classList.remove('hidden');
+          islandContent.classList.add('flex');
+          renderMenu(menuType);
+        }, 300); // Ada büyüme süresinin yarısında içeriği göster
+
+      }, 600); // CSS transform süresi
+    }
+
+    function closePanel() {
+      islandContent.classList.remove('flex');
+      islandContent.classList.add('hidden');
+      islandContent.innerHTML = '';
+      
+      heroIsland.classList.remove('island-panel');
+      heroIsland.classList.add('island-circle');
+      
+      heroIcon.classList.remove('hidden');
+      setTimeout(() => { heroIcon.style.opacity = '1'; }, 100);
+      
+      setTimeout(() => { isPanelOpen = false; }, 650);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 3. MENÜ İÇERİKLERİNİN RENDER EDİLMESİ (Staggered Fade) */
+    /* -------------------------------------------------------------------------- */
+
+    function renderMenu(type) {
+      let html = `<div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                    <h3 class="text-white/80 font-mono text-sm tracking-widest uppercase">`;
+
+      if (type === 'themes') {
+        html += `Mekan Teması</h3><button onclick="closePanel()" class="text-white/40 hover:text-white">✕</button></div>`;
+        html += `<div class="flex-1 overflow-y-auto pr-2 space-y-2">`;
+        
+        // Temaları milisaniye gecikmeli (stagger) oluştur
+        themes.forEach((t, index) => {
+          const delay = index * 30; // Her biri 30ms daha geç gelir
+          html += `
+            <div onclick="applyTheme('${t.rgb}')" class="stagger-item flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/20 hover:bg-white/10 cursor-pointer transition-colors" style="animation-delay: ${delay}ms;">
+              <div class="flex items-center gap-3">
+                <span class="text-lg">${t.icon}</span>
+                <span class="text-xs font-mono text-white/80">${t.name}</span>
+              </div>
+              <div class="w-4 h-4 rounded-full" style="background: rgb(${t.rgb}); box-shadow: 0 0 10px rgba(${t.rgb}, 0.8)"></div>
+            </div>`;
+        });
+        html += `</div>`;
+        islandContent.innerHTML = html;
+      } 
+      
+      else if (type === 'reset') {
+        html += `SİSTEM SIFIRLAMA</h3><button onclick="closePanel()" class="text-white/40 hover:text-white">✕</button></div>`;
+        html += `
+          <div class="flex-1 flex flex-col items-center justify-center text-center stagger-item" style="animation-delay: 50ms;">
+            <p class="text-sm font-mono text-red-300 mb-6 px-4">Sayacı kalıcı olarak sıfırlamak istediğinize emin misiniz?</p>
+            <div class="flex gap-3 w-full">
+              <button onclick="executeReset()" class="flex-1 glass-icon bg-red-900/30 border-red-500/30 text-red-300 py-3 rounded-xl font-mono text-xs hover:bg-red-900/60">Evet, Sıfırla</button>
+              <button onclick="closePanel()" class="flex-1 glass-icon bg-white/5 border-white/10 text-white/80 py-3 rounded-xl font-mono text-xs hover:bg-white/10">İptal</button>
+            </div>
+          </div>`;
+        islandContent.innerHTML = html;
+      }
+
+      else if (type === 'leaderboard') {
+        html += `KÜRESEL AĞ</h3><button onclick="closePanel()" class="text-white/40 hover:text-white">✕</button></div>`;
+        
+        // İsim girilmemişse
+        if (!userName) {
+          html += `
+            <div class="flex flex-col gap-3 mt-4 stagger-item" style="animation-delay: 50ms;">
+              <p class="text-xs font-mono text-white/50">Ağa katılmak için kimlik oluşturun:</p>
+              <input id="lb-name" type="text" maxlength="15" placeholder="Siber Adınız..." class="w-full bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[rgba(var(--theme-rgb),1)] font-mono transition-colors">
+              <button onclick="saveNameAndLoad()" class="w-full glass-icon bg-white/10 py-3 rounded-xl text-xs font-bold tracking-wider text-white">BAĞLAN</button>
+            </div>`;
+          islandContent.innerHTML = html;
+        } else {
+          // Liderlik Tablosunu Yükle
+          islandContent.innerHTML = html + `<div id="lb-list" class="flex-1 overflow-y-auto space-y-2 pr-1"><p class="text-center text-white/30 text-xs font-mono mt-10 animate-pulse">Veritabanı Senkronize Ediliyor...</p></div>`;
+          fetchLeaderboard();
+        }
+      }
+    }
+
+    function applyTheme(rgb) {
+      document.documentElement.style.setProperty('--theme-rgb', rgb);
+      localStorage.setItem('apx_theme', rgb);
+      closePanel();
+    }
+
+    function executeReset() {
+      count = 0;
+      counterEl.innerText = "0";
+      localStorage.setItem('apx_cnt', 0);
+      syncToCloud();
+      closePanel();
+    }
+
+    function saveNameAndLoad() {
+      const v = document.getElementById('lb-name').value.trim();
+      if (!v) return;
+      userName = v;
+      localStorage.setItem('apx_name', userName);
+      renderMenu('leaderboard');
+    }
+
+    /* Güvenli ve Timeout Korumalı Liderlik Çekimi */
+    async function fetchLeaderboard() {
+      const container = document.getElementById('lb-list');
+      try {
+        // 3 Saniye Timeout Koruması
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const res = await fetch(DB_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) throw new Error("Ağ hatası");
+        const list = await res.json();
+
+        if (!list || list.length === 0) {
+          container.innerHTML = `<p class="text-center text-white/30 text-xs font-mono mt-10">Ağ boş. İlk izi sen bırak.</p>`;
+          return;
+        }
+
+        container.innerHTML = list.map((item, i) => {
+          const delay = i * 20;
+          return `
+            <div class="stagger-item flex justify-between items-center p-3 bg-black/20 border border-white/5 rounded-xl ${item.id === deviceId ? 'border-[rgba(var(--theme-rgb),0.5)] bg-[rgba(var(--theme-rgb),0.1)]' : ''}" style="animation-delay: ${delay}ms;">
+              <div class="flex items-center gap-3">
+                <span class="font-bold text-xs ${i===0?'text-yellow-400':i===1?'text-gray-300':i===2?'text-amber-600':'text-white/30'}">#${i+1}</span>
+                <span class="text-xs font-mono text-white/80">${item.name} ${item.id === deviceId ? '(Sen)' : ''}</span>
+              </div>
+              <span class="text-xs font-bold text-[rgb(var(--theme-rgb))]">${item.score.toLocaleString('tr-TR')}</span>
+            </div>`;
+        }).join('');
+
+      } catch (e) {
+        // KVDB başarısız olursa arayüz takılmasın, yerel veriyi göstersin
+        container.innerHTML = `
+          <div class="stagger-item p-3 bg-black/20 border border-white/5 rounded-xl mt-4">
+            <p class="text-[10px] text-red-400 font-mono mb-2">Bulut bağlantısı koptu. Yerel veri gösteriliyor:</p>
+            <div class="flex justify-between">
+              <span class="text-xs text-white/80">${userName} (Sen)</span>
+              <span class="text-xs text-[rgb(var(--theme-rgb))]">${count.toLocaleString('tr-TR')}</span>
+            </div>
+          </div>`;
+      }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 4. TIKLAMA, MAKRO KORUMASI VE BULUT SENKRONİZASYONU */
+    /* -------------------------------------------------------------------------- */
+    
+    function handleMainClick(e) {
       if (e) e.preventDefault();
-      if (isBlocked) return;
+      if (isPanelOpen || isBlocked) return; // Panel açıksa sayaç artmaz
 
       const now = Date.now();
       clickTimestamps.push(now);
       clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
 
-      // AutoClicker Koruması (> 18 CPS)
+      // 18 CPS Sınırı (AutoClicker/Makro)
       if (clickTimestamps.length > 18) {
         isBlocked = true;
-        document.getElementById('warning-box').classList.remove('hidden');
+        const warnBox = document.getElementById('warning-box');
+        warnBox.classList.remove('hidden');
+        setTimeout(() => warnBox.style.opacity = '1', 10);
+        
         setTimeout(() => {
-          isBlocked = false;
-          clickTimestamps = [];
-          document.getElementById('warning-box').classList.add('hidden');
+          warnBox.style.opacity = '0';
+          setTimeout(() => { warnBox.classList.add('hidden'); isBlocked = false; clickTimestamps = []; }, 300);
         }, 5000);
         return;
       }
 
       count++;
       counterEl.innerText = count.toLocaleString('tr-TR');
-      localStorage.setItem('apex_click_count', count);
-      playClickSound();
+      localStorage.setItem('apx_cnt', count);
+      playLiquidClick();
 
-      // Hıza Bağlı Parçacık İvmesi
+      // Yıldız hızını artır
       particleSpeedMultiplier = Math.min(clickTimestamps.length * 1.5, 12);
-      
-      // Şiddetli Şok Efekti
-      counterEl.style.transform = 'scale(1.08)';
-      setTimeout(() => counterEl.style.transform = 'scale(1)', 50);
 
-      // Buluta Senkronize Et (Debounce)
       syncToCloud();
     }
 
-    /* Bulut Senkronizasyonu */
     let syncTimer = null;
     function syncToCloud() {
       if (!userName) return;
@@ -233,93 +455,18 @@
           } else {
             list.push({ id: deviceId, name: userName, score: count });
           }
-
-          list.sort((a, b) => b.score - a.score);
+      list.sort((a, b) => b.score - a.score);
           await fetch(DB_URL, { method: 'POST', body: JSON.stringify(list.slice(0, 50)) });
         } catch (e) {}
-      }, 2000);
+      }, 2500); // Tıklamalar bittikten 2.5 sn sonra senkronize et (sunucuyu yormamak için)
     }
 
-    /* Sıfırlama Dönüşüm Animasyonu */
-    function expandReset() {
-      document.getElementById('reset-init-btn').classList.add('hidden');
-      document.getElementById('reset-confirm-box').classList.remove('hidden');
-    }
-
-    function collapseReset() {
-      document.getElementById('reset-confirm-box').classList.add('hidden');
-      document.getElementById('reset-init-btn').classList.remove('hidden');
-    }
-
-    function confirmReset() {
-      count = 0;
-      counterEl.innerText = "0";
-      localStorage.setItem('apex_click_count', 0);
-      syncToCloud();
-      collapseReset();
-    }
-
-    /* Liderlik Tablosu İşlemleri */
-    function openLeaderboard() {
-      document.getElementById('leaderboard-modal').classList.remove('hidden');
-      if (!userName) {
-        document.getElementById('name-input-section').classList.remove('hidden');
-      } else {
-        document.getElementById('name-input-section').classList.add('hidden');
-      }
-      fetchLeaderboard();
-    }
-
-    function closeLeaderboard() {
-      document.getElementById('leaderboard-modal').classList.add('hidden');
-    }
-
-    function saveUserName() {
-      const val = document.getElementById('user-name-input').value.trim();
-      if (!val) return;
-      userName = val;
-      localStorage.setItem('apex_user_name', userName);
-      document.getElementById('name-input-section').classList.add('hidden');
-      syncToCloud();
-      fetchLeaderboard();
-    }
-
-    async function fetchLeaderboard() {
-      const container = document.getElementById('leaderboard-list');
-      container.innerHTML = `<div class="text-center text-white/40 py-8">Sıralama taranıyor...</div>`;
-      
-      try {
-        const res = await fetch(DB_URL);
-        if (res.ok) {
-          const list = await res.json();
-          if (list.length === 0) {
-            container.innerHTML = `<div class="text-center text-white/40 py-8">Henüz oyuncu yok. İlk sen ol!</div>`;
-            return;
-          }
-          container.innerHTML = list.map((item, i) => `
-            <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-emerald-500/50 bg-emerald-500/10' : ''}">
-              <div class="flex items-center gap-3">
-                <span class="font-bold ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}">#${i + 1}</span>
-                <span class="text-white font-semibold">${item.name} ${item.id === deviceId ? '(Sen)' : ''}</span>
-              </div>
-              <span class="text-emerald-400 font-bold">${item.score.toLocaleString('tr-TR')}</span>
-            </div>
-          `).join('');
-        }
-      } catch (e) {
-        container.innerHTML = `<div class="text-center text-red-400 py-8">Bağlantı kurulamadı.</div>`;
-      }
-    }
-
-    /* Tema Değiştirici */
-    function changeTheme(theme) {
-      document.body.setAttribute('data-theme', theme);
-    }
-
-    /* CANVAS - Adaptif Uzay Yıldız Simülasyonu */
+    /* -------------------------------------------------------------------------- */
+    /* 5. CANVAS - ADAPTİF UZAY / YILDIZ AKIŞI */
+    /* -------------------------------------------------------------------------- */
+    
     const canvas = document.getElementById('space-canvas');
     const ctx = canvas.getContext('2d');
-
     let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
 
@@ -337,48 +484,47 @@
     let particleSpeedMultiplier = 1;
 
     function renderSpace() {
-      ctx.fillStyle = 'rgba(3, 7, 18, 0.3)';
-      ctx.fillRect(0, 0, width, height);
-
+      ctx.clearRect(0, 0, width, height);
       const cx = width / 2;
       const cy = height / 2;
 
-      // Hız zamanla normale dönsün
-      particleSpeedMultiplier = Math.max(1, particleSpeedMultiplier * 0.95);
+      // Hız zamanla yavaşça normale (1) döner
+      particleSpeedMultiplier = Math.max(1, particleSpeedMultiplier * 0.96);
 
       stars.forEach(s => {
-        s.z -= 2 * particleSpeedMultiplier;
-        if (s.z <= 0) s.z = width;
+        s.z -= 1.5 * particleSpeedMultiplier;
+        if (s.z <= 0) { s.z = width; s.x = (Math.random() - 0.5) * width * 2; s.y = (Math.random() - 0.5) * height * 2; }
 
         const k = 128 / s.z;
         const px = s.x * k + cx;
         const py = s.y * k + cy;
 
         if (px >= 0 && px < width && py >= 0 && py < height) {
-          const size = Math.max(1, (1 - s.z / width) * 3);
-          const alpha = (1 - s.z / width);
+          const size = Math.max(0.5, (1 - s.z / width) * 2.5);
+          const alpha = (1 - s.z / width) * 0.8;
           
-          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-          
-          // Yüksek hızda çizgiye (hız izine) dönüşsün
-          if (particleSpeedMultiplier > 2) {
-            const tailX = (s.x * (128 / (s.z + particleSpeedMultiplier * 8))) + cx;
-            const tailY = (s.y * (128 / (s.z + particleSpeedMultiplier * 8))) + cy;
+          if (particleSpeedMultiplier > 2.5) {
+            // Işık Hızı Çizgi Efekti
+            const tailX = (s.x * (128 / (s.z + particleSpeedMultiplier * 6))) + cx;
+            const tailY = (s.y * (128 / (s.z + particleSpeedMultiplier * 6))) + cy;
             ctx.beginPath();
             ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = size;
+            ctx.lineWidth = size * 0.8;
+            ctx.lineCap = "round";
             ctx.moveTo(px, py);
             ctx.lineTo(tailX, tailY);
             ctx.stroke();
           } else {
-            ctx.fillRect(px, py, size, size);
+            // Normal Yıldız
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.fill();
           }
         }
       });
-
       requestAnimationFrame(renderSpace);
     }
-
     renderSpace();
   </script>
 </body>
