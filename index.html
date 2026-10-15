@@ -18,7 +18,6 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    /* Küçülme ve Büyüme Efekti */
     .click-button {
       background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(20px);
@@ -62,7 +61,7 @@
   <div id="lb-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
     <div class="glass w-full max-w-md p-6 rounded-3xl flex flex-col max-h-[80vh] border border-white/20">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-        <h3 class="text-sm font-bold font-mono text-green-400 tracking-wider">🏆 CANLI SIRALAMA</h3>
+        <h3 class="text-sm font-bold font-mono text-green-400 tracking-wider">🏆 KÜRESEL CANLI SIRALAMA</h3>
         <button onclick="closeLeaderboard()" class="text-white/50 hover:text-white font-mono text-xl">✕</button>
       </div>
 
@@ -85,7 +84,8 @@
   </div>
 
   <script>
-    const DB_URL = "https://kvdb.io/4y9X6p1kG9xN7Z3mQ8W2vL/apex_clicker_v2";
+    // Kesinlikle ortak havuz için optimize edilmiş global endpoint
+    const DB_URL = "https://kvdb.io/2XN7Z3mQ8W2vL4y9X6p1kG/global_clicker_v3";
     
     let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
     localStorage.setItem('dev_id', deviceId);
@@ -124,7 +124,6 @@
       particleSpeed = 6;
       syncData();
 
-      // JS ile Garantili Küçülme / Büyüme Efekti
       const btn = document.getElementById('main-btn');
       btn.style.transform = 'scale(0.85)';
       setTimeout(() => {
@@ -193,7 +192,9 @@
         const res = await fetch(DB_URL);
         if (res.ok) {
           const text = await res.text();
-          if (text) list = JSON.parse(text);
+          if (text) {
+            try { list = JSON.parse(text); } catch (err) { list = []; }
+          }
         }
 
         const idx = list.findIndex(i => i.id === deviceId);
@@ -208,7 +209,7 @@
         await fetch(DB_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(list.slice(0, 30))
+          body: JSON.stringify(list.slice(0, 50))
         });
       } catch (err) {}
     }
@@ -238,8 +239,8 @@
       } catch (e) {
         container.innerHTML = `
           <div class="p-4 text-center space-y-2">
-            <p class="text-white/60 text-xs">Henüz sunucuda kayıt oluşturulmadı.</p>
-            <p class="text-green-400 text-xs font-bold">${userName ? userName + ': ' + count.toLocaleString('tr-TR') : 'İsmini kaydet ve ilk skoru sen gönder!'}</p>
+            <p class="text-white/60 text-xs">Bağlantı kurulamadı veya kayıt bulunamadı.</p>
+            <p class="text-green-400 text-xs font-bold">${userName ? userName + ': ' + count.toLocaleString('tr-TR') : 'İsmini kaydet ve listeye gir!'}</p>
           </div>`;
       }
     }
