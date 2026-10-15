@@ -3,766 +3,209 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Apex // Sıvı Cam Arayüzü</title>
+  <title>Apex Clicker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --theme-rgb: 168, 85, 247;
-      --theme-glow: rgba(168, 85, 247, 0.45);
+    * { select-none: none; -webkit-user-select: none; box-sizing: border-box; }
+    body { background-color: #000000; color: #ffffff; overflow: hidden; touch-action: manipulation; font-family: system-ui, -apple-system, sans-serif; }
+
+    #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+
+    /* Basit Bulanıklık ve Kontür Efekti (Glassmorphism) */
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    body {
-      background-color: #02040a;
-      color: #f3f4f6;
-      overflow: hidden;
-      touch-action: manipulation;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-      display: flex;
-      justify-content: center;
-    }
-
-    #space-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* Cam ikonlar */
-    .glass-icon {
-      background: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(28px) saturate(160%);
-      -webkit-backdrop-filter: blur(28px) saturate(160%);
-      border: 1px solid rgba(var(--theme-rgb), 0.35);
-      box-shadow:
-        inset 0 0 14px rgba(var(--theme-rgb), 0.12),
-        0 10px 28px rgba(0, 0, 0, 0.45);
-      transition: all 0.28s cubic-bezier(0.32, 0.72, 0, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .glass-icon:active {
-      transform: scale(0.9);
-      border-color: rgba(var(--theme-rgb), 0.85);
-      box-shadow: inset 0 0 18px rgba(var(--theme-rgb), 0.25);
-    }
-
-    /* Üst butonlar */
-    .top-bar {
-      position: absolute;
-      top: 2rem;
-      width: 100%;
-      max-width: 28rem;
-      padding: 0 2rem;
-      display: flex;
-      justify-content: space-between;
-      z-index: 20;
-      pointer-events: none;
-    }
-    .top-bar button {
-      width: 3.1rem;
-      height: 3.1rem;
-      border-radius: 1.1rem;
-      font-size: 1.35rem;
-      pointer-events: auto;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: inherit;
-    }
-
-    /* Ana ada */
-    #hero-island {
-      background: radial-gradient(130% 130% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 100%);
-      backdrop-filter: blur(48px) saturate(190%);
-      -webkit-backdrop-filter: blur(48px) saturate(190%);
-      border: 1px solid rgba(var(--theme-rgb), 0.42);
-      box-shadow:
-        inset 0 1px 1px rgba(255, 255, 255, 0.22),
-        inset 0 -3px 14px rgba(var(--theme-rgb), 0.12),
-        0 14px 48px rgba(var(--theme-rgb), 0.22);
-      transition: all 0.7s cubic-bezier(0.32, 0.72, 0, 1);
-      position: relative;
-      overflow: hidden;
-      will-change: width, height, border-radius;
-    }
-
-    .island-circle {
-      width: 13.5rem;
-      height: 13.5rem;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .island-circle:active {
-      transform: scale(0.955);
-      box-shadow:
-        inset 0 1px 1px rgba(255, 255, 255, 0.22),
-        inset 0 0 28px rgba(var(--theme-rgb), 0.32),
-        0 6px 24px rgba(var(--theme-rgb), 0.15);
-    }
-
-    .island-panel {
-      width: 21.5rem;
-      min-height: 25.5rem;
-      border-radius: 1.85rem;
-      cursor: default;
-      padding: 1.4rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #island-content {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-    }
-    #island-content.show {
-      display: flex;
-    }
-
-    #hero-icon {
-      font-size: 3.8rem;
-      color: white;
-      filter: drop-shadow(0 0 18px rgba(var(--theme-rgb), 0.85));
-      pointer-events: none;
-      transition: opacity 0.32s ease;
-    }
-
-    /* Sayaç */
-    #counter-container {
-      text-align: center;
-      transition: transform 0.7s cubic-bezier(0.32, 0.72, 0, 1);
-      margin-top: 1.4rem;
-    }
-    #counter {
-      font-size: clamp(3.2rem, 12vw, 5.2rem);
-      line-height: 1;
-      font-weight: 900;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      letter-spacing: -0.04em;
-      text-shadow: 0 0 36px rgba(var(--theme-rgb), 0.65);
-      color: rgb(var(--theme-rgb));
-    }
-    #counter-container p {
-      font-size: 0.65rem;
-      font-family: ui-monospace, monospace;
-      letter-spacing: 0.32em;
-      color: rgba(255, 255, 255, 0.28);
-      text-transform: uppercase;
-      margin-top: 0.55rem;
-    }
-
-    /* Alt sıfırlama butonu */
-    .bottom-bar {
-      position: absolute;
-      bottom: 2.4rem;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      z-index: 20;
-      pointer-events: none;
-    }
-    .bottom-bar button {
-      width: 3.5rem;
-      height: 3.5rem;
-      border-radius: 1.35rem;
-      font-size: 1.45rem;
-      color: #f87171;
-      pointer-events: auto;
-      background: none;
-      border: 1px solid rgba(248, 113, 113, 0.35);
-      cursor: pointer;
-    }
-
-    /* Uyarı */
-    #warning-box {
-      position: absolute;
-      top: 6.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(127, 29, 29, 0.45);
+    /* Yeşil Detaylı Ana Buton */
+    .click-button {
+      background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(239, 68, 68, 0.55);
-      color: #fecaca;
-      padding: 0.85rem 1.6rem;
-      border-radius: 1.1rem;
-      font-size: 0.72rem;
-      font-family: ui-monospace, monospace;
-      z-index: 50;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.35s ease;
-      white-space: nowrap;
+      border: 2px solid #22c55e;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.2), inset 0 0 15px rgba(34, 197, 94, 0.1);
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
     }
-    #warning-box.show {
-      opacity: 1;
+    .click-button:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
     }
 
-    /* Uçan ikon */
-    .flying-icon {
-      position: fixed;
-      z-index: 100;
-      transition: transform 0.62s cubic-bezier(0.45, 0, 0.15, 1), opacity 0.62s ease;
-      pointer-events: none;
-    }
-
-    /* Shimmer */
-    .shimmer-wave {
-      position: absolute;
-      top: 0;
-      left: -160%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
-      transform: skewX(-22deg);
-      pointer-events: none;
-    }
-    .animate-shimmer {
-      animation: sweep 0.72s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-    @keyframes sweep {
-      100% { left: 210%; }
-    }
-
-    /* Stagger */
-    .stagger-item {
-      opacity: 0;
-      transform: translateY(14px);
-      animation: slideUpFade 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes slideUpFade {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 3px; }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(var(--theme-rgb), 0.55);
-      border-radius: 4px;
-    }
-
-    /* Menü içi */
-    .menu-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 0.6rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .menu-header h3 {
-      color: rgba(255, 255, 255, 0.78);
-      font-family: ui-monospace, monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-    .menu-header button {
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0.2rem;
-    }
-    .menu-header button:hover { color: white; }
-
-    .theme-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.85rem 0.9rem;
-      border-radius: 0.9rem;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(0, 0, 0, 0.22);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .theme-item:hover { background: rgba(255, 255, 255, 0.09); }
-    .theme-item .left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .theme-item .name {
-      font-size: 0.78rem;
-      font-family: ui-monospace, monospace;
-      color: rgba(255, 255, 255, 0.82);
-    }
-    .theme-dot {
-      width: 1rem;
-      height: 1rem;
-      border-radius: 50%;
-    }
-
-    .lb-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.8rem 0.9rem;
-      background: rgba(0, 0, 0, 0.22);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 0.9rem;
-    }
-    .lb-item.me {
-      border-color: rgba(var(--theme-rgb), 0.5);
-      background: rgba(var(--theme-rgb), 0.12);
-    }
-
-    input#lb-name {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 0.9rem;
-      padding: 0.85rem 1rem;
-      font-size: 0.9rem;
-      color: white;
-      outline: none;
-      font-family: ui-monospace, monospace;
-      transition: border-color 0.2s;
-    }
-    input#lb-name:focus {
-      border-color: rgba(var(--theme-rgb), 0.9);
-    }
-
-    .action-btn {
-      flex: 1;
-      padding: 0.85rem;
-      border-radius: 0.9rem;
-      font-family: ui-monospace, monospace;
-      font-size: 0.78rem;
-      cursor: pointer;
-      border: 1px solid;
-      transition: background 0.2s;
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.4); border-radius: 4px; }
   </style>
 </head>
-<body>
+<body class="w-screen h-screen relative flex flex-col items-center justify-between p-6">
 
   <canvas id="space-canvas"></canvas>
 
-  <!-- ÜST BUTONLAR -->
-  <div class="top-bar">
-    <button id="btn-leaderboard" class="glass-icon" onclick="triggerMorph(this, 'leaderboard')">🏆</button>
-    <button id="btn-themes" class="glass-icon" onclick="triggerMorph(this, 'themes')">🎨</button>
-  </div>
+  <!-- ÜST KISIM: Liderlik Tablosu Butonu -->
+  <header class="w-full max-w-md flex justify-end z-10">
+    <button onclick="openLeaderboard()" class="glass px-4 py-2.5 rounded-2xl flex items-center gap-2 text-xs font-mono font-bold tracking-wider hover:border-white/30 active:scale-95 transition-all">
+      🏆 <span class="text-green-400">LİDERLİK</span>
+    </button>
+  </header>
 
-  <!-- MERKEZ -->
-  <main style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;max-width:28rem;gap:0.5rem;">
-    
-    <div id="hero-island" class="island-circle" onmousedown="handleMainClick(event)" ontouchstart="handleMainClick(event)">
-      <div id="island-content"></div>
-      <div id="hero-icon">⚡</div>
+  <!-- ORTA KISIM: Sayaç ve Ana Buton -->
+  <main class="w-full max-w-md flex flex-col items-center justify-center z-10 my-auto gap-8">
+    <div class="text-center space-y-1">
+      <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-white/40">Toplam Skor</p>
+      <div id="counter" class="text-6xl font-black font-mono tracking-tighter text-green-400" style="text-shadow: 0 0 20px rgba(34, 197, 94, 0.4);">
+        0
+      </div>
     </div>
 
-    <div id="counter-container">
-      <div id="counter">0</div>
-      <p>Enerji Seviyesi</p>
+    <!-- Ana Tıklama Butonu -->
+    <div id="main-btn" onmousedown="handleClick()" ontouchstart="handleClick(event)" class="click-button w-44 h-44 rounded-full flex items-center justify-center cursor-pointer select-none">
+      <span class="text-4xl pointer-events-none">⚡</span>
     </div>
   </main>
 
-  <!-- ALT SIFIRLAMA -->
-  <div class="bottom-bar">
-    <button id="btn-reset" class="glass-icon" onclick="triggerMorph(this, 'reset')">⟲</button>
+  <div class="w-full max-w-md h-8 z-10"></div>
+
+  <!-- LİDERLİK TABLOSU MODALI -->
+  <div id="lb-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass w-full max-w-md p-6 rounded-3xl flex flex-col max-h-[80vh] border border-white/20">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+        <h3 class="text-sm font-bold font-mono text-green-400 tracking-wider">🏆 CANLI SIRALAMA</h3>
+        <button onclick="closeLeaderboard()" class="text-white/50 hover:text-white font-mono text-xl">✕</button>
+      </div>
+
+      <!-- İsim Kayıt Alanı -->
+      <div id="name-box" class="mb-4 hidden">
+        <p class="text-[11px] text-white/60 mb-2 font-mono">Listeye adını yazdır:</p>
+        <div class="flex gap-2">
+          <input id="user-input" type="text" maxlength="15" placeholder="İsminiz..." class="glass px-3 py-2 text-xs text-white outline-none focus:border-green-400 flex-1 rounded-xl font-mono">
+          <button onclick="saveName()" class="bg-green-500 hover:bg-green-600 text-black font-bold px-4 py-2 rounded-xl text-xs font-mono">Kaydet</button>
+        </div>
+      </div>
+
+      <!-- Liste Alanı -->
+      <div id="lb-list" class="flex-1 overflow-y-auto space-y-2 pr-1 font-mono text-xs">
+        <div class="text-center text-white/40 py-8">Yükleniyor...</div>
+      </div>
+    </div>
   </div>
 
-  <!-- UYARI -->
-  <div id="warning-box">SİSTEM KİLİTLENDİ: İnsanüstü Hız Algılandı!</div>
-
   <script>
-    const DB_URL = "https://kvdb.io/4y9X6p1kG9xN7Z3mQ8W2vL/apex_leaderboard";
-    let deviceId = localStorage.getItem('apx_id') || crypto.randomUUID();
-    localStorage.setItem('apx_id', deviceId);
-    let count = parseInt(localStorage.getItem('apx_cnt') || '0');
-    let userName = localStorage.getItem('apx_name') || '';
+    const DB_URL = "https://kvdb.io/4y9X6p1kG9xN7Z3mQ8W2vL/apex_simple_lb";
     
-    let isPanelOpen = false;
-    let clickTimestamps = [];
-    let isBlocked = false;
+    // Cihaz Kimliği ve Hafıza Yönetimi
+    let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
+    localStorage.setItem('dev_id', deviceId);
+    let count = parseInt(localStorage.getItem('dev_cnt') || '0');
+    let userName = localStorage.getItem('dev_name') || '';
 
-    const heroIsland = document.getElementById('hero-island');
-    const heroIcon = document.getElementById('hero-icon');
-    const islandContent = document.getElementById('island-content');
     const counterEl = document.getElementById('counter');
     counterEl.innerText = count.toLocaleString('tr-TR');
 
-    const themes = [
-      { id: '1', name: 'Kozmik Titreşim', rgb: '168, 85, 247', icon: '🌌' },
-      { id: '2', name: 'Sıvı Zümrüt', rgb: '16, 185, 129', icon: '🌲' },
-      { id: '3', name: 'Okyanus Yakamozu', rgb: '56, 189, 248', icon: '🌊' },
-      { id: '4', name: 'Güneş Fırtınası', rgb: '245, 158, 11', icon: '☄️' },
-      { id: '5', name: 'Buzul Ateşi', rgb: '226, 232, 240', icon: '❄️' },
-      { id: '6', name: 'Karanlık Madde', rgb: '71, 85, 105', icon: '🌑' },
-      { id: '7', name: 'Şeftali Bulutu', rgb: '251, 146, 60', icon: '🍑' },
-      { id: '8', name: 'Sonsuzluk Yakutu', rgb: '225, 29, 72', icon: '♦️' }
-    ];
+    let particleSpeed = 1;
+    let liveInterval = null;
 
-    let currentTheme = localStorage.getItem('apx_theme') || '168, 85, 247';
-    document.documentElement.style.setProperty('--theme-rgb', currentTheme);
-
+    // Rahatlatıcı Ses Motoru
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playLiquidClick() {
+    function playSound() {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(820, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(280, audioCtx.currentTime + 0.055);
-      gain.gain.setValueAtTime(0.11, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.008, audioCtx.currentTime + 0.055);
+      osc.frequency.setValueAtTime(700, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.055);
+      osc.stop(audioCtx.currentTime + 0.04);
     }
 
-    function triggerMorph(buttonEl, menuType) {
-      if (isPanelOpen) return;
-      isPanelOpen = true;
-
-      const rect = buttonEl.getBoundingClientRect();
-      const clone = buttonEl.cloneNode(true);
-      clone.className = buttonEl.className + ' flying-icon';
-      clone.style.left = rect.left + 'px';
-      clone.style.top = rect.top + 'px';
-      clone.style.margin = '0';
-      clone.style.width = rect.width + 'px';
-      clone.style.height = rect.height + 'px';
-      document.body.appendChild(clone);
-
-      const islandRect = heroIsland.getBoundingClientRect();
-      const centerX = islandRect.left + (islandRect.width / 2) - (rect.width / 2);
-      const centerY = islandRect.top + (islandRect.height / 2) - (rect.height / 2);
-
-      requestAnimationFrame(() => {
-        clone.style.transform = `translate(${centerX - rect.left}px, ${centerY - rect.top}px) rotate(720deg) scale(0.15)`;
-        clone.style.opacity = '0';
-      });
-
-      setTimeout(() => {
-        clone.remove();
-        
-        const shimmer = document.createElement('div');
-        shimmer.className = 'shimmer-wave animate-shimmer';
-        heroIsland.appendChild(shimmer);
-        setTimeout(() => shimmer.remove(), 720);
-
-        heroIcon.style.opacity = '0';
-        heroIsland.classList.remove('island-circle');
-        heroIsland.classList.add('island-panel');
-
-        setTimeout(() => {
-          heroIcon.style.display = 'none';
-          islandContent.classList.add('show');
-          renderMenu(menuType);
-        }, 320);
-      }, 620);
-    }
-
-    function closePanel() {
-      islandContent.classList.remove('show');
-      islandContent.innerHTML = '';
-      
-      heroIsland.classList.remove('island-panel');
-      heroIsland.classList.add('island-circle');
-      
-      heroIcon.style.display = 'block';
-      setTimeout(() => { heroIcon.style.opacity = '1'; }, 80);
-      
-      setTimeout(() => { isPanelOpen = false; }, 700);
-    }
-
-    function renderMenu(type) {
-      let html = `<div class="menu-header"><h3>`;
-
-      if (type === 'themes') {
-        html += `Mekan Teması</h3><button onclick="closePanel()">✕</button></div>`;
-        html += `<div style="flex:1;overflow-y:auto;padding-right:0.4rem;display:flex;flex-direction:column;gap:0.45rem;">`;
-        
-        themes.forEach((t, index) => {
-          const delay = index * 32;
-          html += `
-            <div onclick="applyTheme('\( {t.rgb}')" class="stagger-item theme-item" style="animation-delay: \){delay}ms;">
-              <div class="left">
-                <span style="font-size:1.15rem">${t.icon}</span>
-                <span class="name">${t.name}</span>
-              </div>
-              <div class="theme-dot" style="background:rgb(\( {t.rgb});box-shadow:0 0 12px rgba( \){t.rgb},0.85)"></div>
-            </div>`;
-        });
-        html += `</div>`;
-        islandContent.innerHTML = html;
-      } 
-      
-      else if (type === 'reset') {
-        html += `SİSTEM SIFIRLAMA</h3><button onclick="closePanel()">✕</button></div>`;
-        html += `
-          <div class="stagger-item" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation-delay:50ms;">
-            <p style="font-size:0.88rem;font-family:ui-monospace,monospace;color:#fca5a5;margin-bottom:1.6rem;padding:0 0.8rem;line-height:1.45;">
-              Sayacı kalıcı olarak sıfırlamak istediğine emin misin?
-            </p>
-            <div style="display:flex;gap:0.7rem;width:100%;">
-              <button onclick="executeReset()" class="action-btn" style="background:rgba(127,29,29,0.35);border-color:rgba(239,68,68,0.4);color:#fca5a5;">Evet, Sıfırla</button>
-              <button onclick="closePanel()" class="action-btn" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);">İptal</button>
-            </div>
-          </div>`;
-        islandContent.innerHTML = html;
-      }
-
-      else if (type === 'leaderboard') {
-        html += `KÜRESEL AĞ</h3><button onclick="closePanel()">✕</button></div>`;
-        
-        if (!userName) {
-          html += `
-            <div class="stagger-item" style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;animation-delay:50ms;">
-              <p style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.48);">Ağa katılmak için kimlik oluştur:</p>
-              <input id="lb-name" type="text" maxlength="15" placeholder="Siber Adın...">
-              <button onclick="saveNameAndLoad()" class="action-btn" style="width:100%;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:white;font-weight:700;letter-spacing:0.08em;">BAĞLAN</button>
-            </div>`;
-          islandContent.innerHTML = html;
-        } else {
-          islandContent.innerHTML = html + `<div id="lb-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.3rem;"><p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Veritabanı Senkronize Ediliyor...</p></div>`;
-          fetchLeaderboard();
-        }
-      }
-    }
-
-    function applyTheme(rgb) {
-      document.documentElement.style.setProperty('--theme-rgb', rgb);
-      localStorage.setItem('apx_theme', rgb);
-      closePanel();
-    }
-
-    function executeReset() {
-      count = 0;
-      counterEl.innerText = "0";
-      localStorage.setItem('apx_cnt', 0);
-      syncToCloud();
-      closePanel();
-    }
-
-    function saveNameAndLoad() {
-      const v = document.getElementById('lb-name').value.trim();
-      if (!v) return;
-      userName = v;
-      localStorage.setItem('apx_name', userName);
-      renderMenu('leaderboard');
-    }
-
-    async function fetchLeaderboard() {
-      const container = document.getElementById('lb-list');
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3200);
-        
-        const res = await fetch(DB_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
-        if (!res.ok) throw new Error("Ağ hatası");
-        const list = await res.json();
-
-        if (!list || list.length === 0) {
-          container.innerHTML = `<p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Ağ boş. İlk izi sen bırak.</p>`;
-          return;
-        }
-
-        container.innerHTML = list.map((item, i) => {
-          const delay = i * 22;
-          const rankColor = i===0 ? '#facc15' : i===1 ? '#d1d5db' : i===2 ? '#d97706' : 'rgba(255,255,255,0.28)';
-          return `
-            <div class="stagger-item lb-item \( {item.id === deviceId ? 'me' : ''}" style="animation-delay: \){delay}ms;">
-              <div style="display:flex;align-items:center;gap:0.7rem;">
-                <span style="font-weight:700;font-size:0.78rem;color:\( {rankColor};"># \){i+1}</span>
-                <span style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.82);">\( {item.name} \){item.id === deviceId ? ' (Sen)' : ''}</span>
-              </div>
-              <span style="font-size:0.78rem;font-weight:700;color:rgb(var(--theme-rgb));">${item.score.toLocaleString('tr-TR')}</span>
-            </div>`;
-        }).join('');
-
-      } catch (e) {
-        container.innerHTML = `
-          <div class="stagger-item<div onclick="applyTheme('\( {t.rgb}')" class="stagger-item theme-item" style="animation-delay: \){delay}ms;">
-              <div class="left">
-                <span style="font-size:1.15rem">${t.icon}</span>
-                <span class="name">${t.name}</span>
-              </div>
-              <div class="theme-dot" style="background:rgb(\( {t.rgb});box-shadow:0 0 12px rgba( \){t.rgb},0.85)"></div>
-            </div>`;
-        });
-        html += `</div>`;
-        islandContent.innerHTML = html;
-      } 
-      
-      else if (type === 'reset') {
-        html += `SİSTEM SIFIRLAMA</h3><button onclick="closePanel()">✕</button></div>`;
-        html += `
-          <div class="stagger-item" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation-delay:50ms;">
-            <p style="font-size:0.88rem;font-family:ui-monospace,monospace;color:#fca5a5;margin-bottom:1.6rem;padding:0 0.8rem;line-height:1.45;">
-              Sayacı kalıcı olarak sıfırlamak istediğine emin misin?
-            </p>
-            <div style="display:flex;gap:0.7rem;width:100%;">
-              <button onclick="executeReset()" class="action-btn" style="background:rgba(127,29,29,0.35);border-color:rgba(239,68,68,0.4);color:#fca5a5;">Evet, Sıfırla</button>
-              <button onclick="closePanel()" class="action-btn" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);">İptal</button>
-            </div>
-          </div>`;
-        islandContent.innerHTML = html;
-      }
-
-      else if (type === 'leaderboard') {
-        html += `KÜRESEL AĞ</h3><button onclick="closePanel()">✕</button></div>`;
-        
-        if (!userName) {
-          html += `
-            <div class="stagger-item" style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;animation-delay:50ms;">
-              <p style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.48);">Ağa katılmak için kimlik oluştur:</p>
-              <input id="lb-name" type="text" maxlength="15" placeholder="Siber Adın...">
-              <button onclick="saveNameAndLoad()" class="action-btn" style="width:100%;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:white;font-weight:700;letter-spacing:0.08em;">BAĞLAN</button>
-            </div>`;
-          islandContent.innerHTML = html;
-        } else {
-          islandContent.innerHTML = html + `<div id="lb-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.3rem;"><p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Veritabanı Senkronize Ediliyor...</p></div>`;
-          fetchLeaderboard();
-        }
-      }
-    }
-
-    function applyTheme(rgb) {
-      document.documentElement.style.setProperty('--theme-rgb', rgb);
-      localStorage.setItem('apx_theme', rgb);
-      closePanel();
-    }
-
-    function executeReset() {
-      count = 0;
-      counterEl.innerText = "0";
-      localStorage.setItem('apx_cnt', 0);
-      syncToCloud();
-      closePanel();
-    }
-
-    function saveNameAndLoad() {
-      const v = document.getElementById('lb-name').value.trim();
-      if (!v) return;
-      userName = v;
-      localStorage.setItem('apx_name', userName);
-      renderMenu('leaderboard');
-    }
-
-    async function fetchLeaderboard() {
-      const container = document.getElementById('lb-list');
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3200);
-        
-        const res = await fetch(DB_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
-        if (!res.ok) throw new Error("Ağ hatası");
-        const list = await res.json();
-
-        if (!list || list.length === 0) {
-          container.innerHTML = `<p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Ağ boş. İlk izi sen bırak.</p>`;
-          return;
-        }
-
-        container.innerHTML = list.map((item, i) => {
-          const delay = i * 22;
-          const rankColor = i===0 ? '#facc15' : i===1 ? '#d1d5db' : i===2 ? '#d97706' : 'rgba(255,255,255,0.28)';
-          return `
-            <div class="stagger-item lb-item \( {item.id === deviceId ? 'me' : ''}" style="animation-delay: \){delay}ms;">
-              <div style="display:flex;align-items:center;gap:0.7rem;">
-                <span style="font-weight:700;font-size:0.78rem;color:\( {rankColor};"># \){i+1}</span>
-                <span style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.82);">\( {item.name} \){item.id === deviceId ? ' (Sen)' : ''}</span>
-              </div>
-              <span style="font-size:0.78rem;font-weight:700;color:rgb(var(--theme-rgb));">${item.score.toLocaleString('tr-TR')}</span>
-            </div>`;
-        }).join('');
-
-      } catch (e) {
-        container.innerHTML = `
-          <div class="stagger-item lb-item" style="margin-top:1rem;">
-            <div>
-              <p style="font-size:0.65rem;color:#f87171;font-family:ui-monospace,monospace;margin-bottom:0.4rem;">Bulut bağlantısı koptu. Yerel veri:</p>
-              <div style="display:flex;justify-content:space-between;">
-                <span style="font-size:0.78rem;color:rgba(255,255,255,0.82);">${userName} (Sen)</span>
-                <span style="font-size:0.78rem;color:rgb(var(--theme-rgb));">${count.toLocaleString('tr-TR')}</span>
-              </div>
-            </div>
-          </div>`;
-      }
-    }
-
-    function handleMainClick(e) {
+    // Tıklama Mantığı
+    function handleClick(e) {
       if (e) e.preventDefault();
-      if (isPanelOpen || isBlocked) return;
-
-      const now = Date.now();
-      clickTimestamps.push(now);
-      clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
-
-      if (clickTimestamps.length > 18) {
-        isBlocked = true;
-        const warnBox = document.getElementById('warning-box');
-        warnBox.classList.add('show');
-        
-        setTimeout(() => {
-          warnBox.classList.remove('show');
-          setTimeout(() => { isBlocked = false; clickTimestamps = []; }, 350);
-        }, 4800);
-        return;
-      }
-
       count++;
       counterEl.innerText = count.toLocaleString('tr-TR');
-      localStorage.setItem('apx_cnt', count);
-      playLiquidClick();
-
-      particleSpeedMultiplier = Math.min(clickTimestamps.length * 1.55, 13);
-      syncToCloud();
+      localStorage.setItem('dev_cnt', count);
+      playSound();
+      particleSpeed = 6; // Tıklandığında yıldızlar hızlanır
+      syncData();
     }
 
-    let syncTimer = null;
-    function syncToCloud() {
+    // Liderlik Tablosu Kontrolleri
+    function openLeaderboard() {
+      document.getElementById('lb-modal').classList.remove('hidden');
+      if (!userName) {
+        document.getElementById('name-box').classList.remove('hidden');
+      } else {
+        document.getElementById('name-box').classList.add('hidden');
+      }
+      loadLeaderboard();
+      // Canlı Güncelleme (Her 10 saniyede bir)
+      clearInterval(liveInterval);
+      liveInterval = setInterval(loadLeaderboard, 10000);
+    }
+
+    function closeLeaderboard() {
+      document.getElementById('lb-modal').classList.add('hidden');
+      clearInterval(liveInterval);
+    }
+
+    function saveName() {
+      const val = document.getElementById('user-input').value.trim();
+      if (!val) return;
+      userName = val;
+      localStorage.setItem('dev_name', userName);
+      document.getElementById('name-box').classList.add('hidden');
+      syncData();
+      loadLeaderboard();
+    }
+
+    async function syncData() {
       if (!userName) return;
-      clearTimeout(syncTimer);
-      syncTimer = setTimeout(async () => {
-        try {
-          let list = [];
-          const res = await fetch(DB_URL);
-          if (res.ok) list = await res.json();
-          
-          const index = list.findIndex(item => item.id === deviceId);
-          if (index !== -1) {
-            list[index].score = count;
-            list[index].name = userName;
-          } else {
-            list.push({ id: deviceId, name: userName, score: count });
-          }
-          list.sort((a, b) => b.score - a.score);
-          await fetch(DB_URL, { method: 'POST', body: JSON.stringify(list.slice(0, 50)) });
-        } catch (e) {}
-      }, 2600);
+      try {
+        let list = [];
+        const res = await fetch(DB_URL);
+        if (res.ok) list = await res.json();
+
+        const idx = list.findIndex(i => i.id === deviceId);
+        if (idx !== -1) {
+          list[idx].score = count;
+          list[idx].name = userName;
+        } else {
+          list.push({ id: deviceId, name: userName, score: count });
+        }
+        list.sort((a, b) => b.score - a.score);
+        await fetch(DB_URL, { method: 'POST', body: JSON.stringify(list.slice(0, 30)) });
+      } catch (err) {}
     }
 
-    /* Canvas yıldızlar */
+    async function loadLeaderboard() {
+      const container = document.getElementById('lb-list');
+      try {
+        const res = await fetch(DB_URL);
+        if (!res.ok) throw new Error();
+        const list = await res.json();
+
+        if (!list || list.length === 0) {
+          container.innerHTML = `<div class="text-center text-white/40 py-8">Henüz kayıt yok.</div>`;
+          return;
+        }
+
+        container.innerHTML = list.map((item, i) => `
+          <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'}">
+            <div class="flex items-center gap-3">
+              <span class="font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}">#${i + 1}</span>
+              <span class="text-white">${item.name} ${item.id === deviceId ? '(Sen)' : ''}</span>
+            </div>
+            <span class="text-green-400 font-bold">${item.score.toLocaleString('tr-TR')}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="text-center text-white/40 py-8">Veriler yüklenemedi.</div>`;
+      }
+    }
+
+    // Uzay / Yıldız Arka Planı (Canvas)
     const canvas = document.getElementById('space-canvas');
     const ctx = canvas.getContext('2d');
     let width = canvas.width = window.innerWidth;
@@ -773,58 +216,51 @@
       height = canvas.height = window.innerHeight;
     });
 
-    let stars = Array.from({ length: 160 }, () => ({
-      x: (Math.random() - 0.5) * width * 2.2,
-      y: (Math.random() - 0.5) * height * 2.2,
+    let stars = Array.from({ length: 120 }, () => ({
+      x: (Math.random() - 0.5) * width * 2,
+      y: (Math.random() - 0.5) * height * 2,
       z: Math.random() * width
     }));
 
-    let particleSpeedMultiplier = 1;
+    function animateSpace() {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
 
-    function renderSpace() {
-      ctx.clearRect(0, 0, width, height);
       const cx = width / 2;
       const cy = height / 2;
 
-      particleSpeedMultiplier = Math.max(1, particleSpeedMultiplier * 0.955);
+      particleSpeed = Math.max(1, particleSpeed * 0.95);
 
       stars.forEach(s => {
-        s.z -= 1.55 * particleSpeedMultiplier;
-        if (s.z <= 0) {
-          s.z = width;
-          s.x = (Math.random() - 0.5) * width * 2.2;
-          s.y = (Math.random() - 0.5) * height * 2.2;
-        }
+        s.z -= 1.5 * particleSpeed;
+        if (s.z <= 0) { s.z = width; s.x = (Math.random() - 0.5) * width * 2; s.y = (Math.random() - 0.5) * height * 2; }
 
-        const k = 128 / s.z;
+        const k = 120 / s.z;
         const px = s.x * k + cx;
         const py = s.y * k + cy;
 
         if (px >= 0 && px < width && py >= 0 && py < height) {
-          const size = Math.max(0.45, (1 - s.z / width) * 2.6);
-          const alpha = (1 - s.z / width) * 0.82;
-          
-          if (particleSpeedMultiplier > 2.6) {
-            const tailX = (s.x * (128 / (s.z + particleSpeedMultiplier * 7))) + cx;
-            const tailY = (s.y * (128 / (s.z + particleSpeedMultiplier * 7))) + cy;
+          const size = Math.max(0.5, (1 - s.z / width) * 2);
+          const alpha = (1 - s.z / width);
+
+          if (particleSpeed > 2) {
+            const tailX = (s.x * (120 / (s.z + particleSpeed * 4))) + cx;
+            const tailY = (s.y * (120 / (s.z + particleSpeed * 4))) + cy;
             ctx.beginPath();
             ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = size * 0.75;
-            ctx.lineCap = "round";
+            ctx.lineWidth = size;
             ctx.moveTo(px, py);
             ctx.lineTo(tailX, tailY);
             ctx.stroke();
           } else {
             ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.beginPath();
-            ctx.arc(px, py, size, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(px, py, size, size);
           }
         }
       });
-      requestAnimationFrame(renderSpace);
+      requestAnimationFrame(animateSpace);
     }
-    renderSpace();
+    animateSpace();
   </script>
 </body>
 </html>
