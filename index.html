@@ -84,7 +84,6 @@
   </div>
 
   <script>
-    // Tamamen kesintisiz, ücretsiz public veri depolama köprüsü (API Key istemez)
     const DB_URL = "https://jsonbin.org/sino_apex_class_room_v1";
     
     let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
@@ -167,6 +166,7 @@
       if (countdownTimer) clearInterval(countdownTimer);
     }
 
+    updateCountdownUI(); // Ek tanım
     function updateCountdownUI() {
       const el = document.getElementById('countdown-text');
       if (el) el.innerText = `Sonraki otomatik yenileme: ${secondsLeft}s`;
@@ -185,7 +185,7 @@
       });
     }
 
-    // Gelişmiş Akıllı Veri Birleştirme (Smart Merge) Mekanizması
+    // Çelik Zırhlı Akıllı Veri Senkronizasyonu
     async function syncData() {
       if (!userName) return;
       try {
@@ -194,17 +194,15 @@
         if (res.ok) {
           const text = await res.text();
           if (text) {
-            try { 
-              const parsed = JSON.parse(text);
-              if (Array.isArray(parsed)) list = parsed;
-              else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
-            } catch (err) { list = []; }
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) list = parsed;
+            else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
           }
         }
 
         if (!Array.isArray(list)) list = [];
 
-        // Cihaz kimliği ile listede var mı kontrol et, varsa güncelle, yoksa ekle
+        // Varsa güncelle, yoksa ekle
         const idx = list.findIndex(i => i.id === deviceId);
         if (idx !== -1) {
           list[idx].score = count;
@@ -213,25 +211,28 @@
           list.push({ id: deviceId, name: userName, score: count });
         }
 
-        // Puan sıralaması (Büyükten küçüğe)
+        // Büyükten küçüğe sırala
         list.sort((a, b) => b.score - a.score);
 
-        // Ortak köprüye gönder
         await fetch(DB_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ list: list.slice(0, 50) })
+          body: JSON.stringify({ list: list })
         });
       } catch (err) {}
     }
 
+    // Çelik Zırhlı Liste Okuma ve Ekrana Basma Fonksiyonu
     async function loadLeaderboard() {
       const container = document.getElementById('lb-list');
+      container.innerHTML = `<div class="text-center text-white/40 py-8">Yükleniyor...</div>`;
+      
       try {
         const res = await fetch(DB_URL);
         if (!res.ok) throw new Error();
         const text = await res.text();
         let list = [];
+        
         if (text) {
           const parsed = JSON.parse(text);
           if (Array.isArray(parsed)) list = parsed;
@@ -243,20 +244,21 @@
           return;
         }
 
+        // Listeyi güvenli bir şekilde ekrana çizdir
         container.innerHTML = list.map((item, i) => `
           <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'}">
             <div class="flex items-center gap-3">
               <span class="font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}">#${i + 1}</span>
-              <span class="text-white">${item.name} ${item.id === deviceId ? '(Sen)' : ''}</span>
+              <span class="text-white">${item.name || 'İsimsiz'} ${item.id === deviceId ? '(Sen)' : ''}</span>
             </div>
-            <span class="text-green-400 font-bold">${item.score.toLocaleString('tr-TR')}</span>
+            <span class="text-green-400 font-bold">${(item.score || 0).toLocaleString('tr-TR')}</span>
           </div>
         `).join('');
       } catch (e) {
         container.innerHTML = `
           <div class="p-4 text-center space-y-2">
-            <p class="text-white/60 text-xs">Bağlantı kurulamadı veya kayıt bulunamadı.</p>
-            <p class="text-green-400 text-xs font-bold">${userName ? userName + ': ' + count.toLocaleString('tr-TR') : 'İsmini kaydet ve listeye gir!'}</p>
+            <p class="text-white/60 text-xs">Liste yüklenirken sorun oluştu ama skorun güvende.</p>
+            <p class="text-green-400 text-xs font-bold">${userName ? userName + ': ' + count.toLocaleString('tr-TR') : ''}</p>
           </div>`;
       }
     }
