@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Apex Clicker</title>
+  <title>Apex Clicker // Küresel Sıralama</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { select-none: none; -webkit-user-select: none; box-sizing: border-box; }
@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <!-- TIKLA Yazılı Ana Buton -->
+    <!-- TIKLA Butonu -->
     <div id="main-btn" onmousedown="handleClick()" ontouchstart="handleClick(event)" class="click-button w-44 h-44 rounded-full flex items-center justify-center cursor-pointer select-none">
       <span class="text-lg font-mono font-bold tracking-widest text-green-400 pointer-events-none">TIKLA</span>
     </div>
@@ -84,8 +84,7 @@
   </div>
 
   <script>
-    // Kesinlikle ortak havuz için optimize edilmiş global endpoint
-    const DB_URL = "https://kvdb.io/2XN7Z3mQ8W2vL4y9X6p1kG/global_clicker_v4";
+    const DB_URL = "https://kvdb.io/2XN7Z3mQ8W2vL4y9X6p1kG/global_clicker_v5";
     
     let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
     localStorage.setItem('dev_id', deviceId);
@@ -185,7 +184,7 @@
       });
     }
 
-    // Akıllı Veri Birleştirme (Smart Merge) Fonksiyonu
+    // Geliştirilmiş Akıllı Veri Birleştirme (Smart Merge)
     async function syncData() {
       if (!userName) return;
       try {
@@ -200,7 +199,7 @@
 
         if (!Array.isArray(list)) list = [];
 
-        // Cihaz ID'sine göre listede var mı kontrol et
+        // Cihaz ID'sine göre var olan kaydı güncelle veya yenisini ekle
         const idx = list.findIndex(i => i.id === deviceId);
         if (idx !== -1) {
           list[idx].score = count;
@@ -209,10 +208,10 @@
           list.push({ id: deviceId, name: userName, score: count });
         }
 
-        // Büyükten küçüğe sırala
+        // Puanlara göre büyükten küçüğe sırala
         list.sort((a, b) => b.score - a.score);
 
-        // Ortak havuza geri kaydet
+        // Küresel havuza gönder
         await fetch(DB_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
@@ -234,6 +233,7 @@
           return;
         }
 
+        // Cihaz ID'leri gizlenir, sadece isimler, skorlar ve sıralama gösterilir
         container.innerHTML = list.map((item, i) => `
           <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'}">
             <div class="flex items-center gap-3">
