@@ -4,159 +4,390 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Apex // Sıvı Cam Arayüzü</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      /* Varsayılan Tema: Kozmik Titreşim (Mor/Pembe) */
-      --theme-rgb: 168, 85, 247; 
-      --theme-glow: rgba(168, 85, 247, 0.4);
+      --theme-rgb: 168, 85, 247;
+      --theme-glow: rgba(168, 85, 247, 0.45);
     }
-    
-    * { select-none: none; -webkit-user-select: none; box-sizing: border-box; }
-    body { background-color: #02040a; color: #f3f4f6; overflow: hidden; touch-action: manipulation; font-family: system-ui, -apple-system, sans-serif; }
 
-    /* --- UZAY / YILDIZ ARKA PLANI --- */
-    #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
-
-    /* --- CAM / SIVI METERYAL (VISION OS STİLİ) --- */
-    .glass-icon {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(24px) saturate(150%);
-      -webkit-backdrop-filter: blur(24px) saturate(150%);
-      border: 1px solid rgba(var(--theme-rgb), 0.3);
-      box-shadow: inset 0 0 12px rgba(var(--theme-rgb), 0.1), 0 8px 24px rgba(0, 0, 0, 0.4);
-      transition: all 0.3s ease;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    .glass-icon:active { transform: scale(0.92); border-color: rgba(var(--theme-rgb), 0.8); }
 
-    /* --- DİNAMİK ADA (ANA BUTON / PANEL) --- */
-    #hero-island {
-      background: radial-gradient(130% 130% at 50% 0%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-      backdrop-filter: blur(40px) saturate(180%);
-      -webkit-backdrop-filter: blur(40px) saturate(180%);
-      border: 1px solid rgba(var(--theme-rgb), 0.4);
-      box-shadow: 
-        inset 0 1px 1px rgba(255, 255, 255, 0.2), 
-        inset 0 -2px 10px rgba(var(--theme-rgb), 0.1), 
-        0 10px 40px rgba(var(--theme-rgb), 0.2);
-      transition: all 0.65s cubic-bezier(0.32, 0.72, 0, 1);
-      position: relative;
+    body {
+      background-color: #02040a;
+      color: #f3f4f6;
       overflow: hidden;
+      touch-action: manipulation;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      display: flex;
+      justify-content: center;
     }
 
-    /* Mod 1: Tıklama Dairesi */
-    .island-circle {
-      width: 14rem; height: 14rem;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex; justify-content: center; align-items: center;
-    }
-    .island-circle:active {
-      transform: scale(0.96);
-      box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(var(--theme-rgb), 0.3), 0 5px 20px rgba(var(--theme-rgb), 0.1);
-    }
-
-    /* Mod 2: Genişletilmiş Menü Dikdörtgeni */
-    .island-panel {
-      width: 22rem; min-height: 26rem;
-      border-radius: 2rem;
-      cursor: default;
-      padding: 1.5rem;
-      display: flex; flex-direction: column;
-    }
-
-    /* --- SAYACIN AŞAĞI YUMUŞAK KAYMASI --- */
-    #counter-container {
-      transition: transform 0.65s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    /* --- EFEKTLER --- */
-    /* İkon Uçma Animasyonu */
-    .flying-icon {
-      position: fixed; z-index: 100;
-      transition: transform 0.6s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.6s;
-    }
-
-    /* Parıltı / Dalga (Shimmer) Efekti */
-    .shimmer-wave {
-      position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transform: skewX(-20deg);
+    #space-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
       pointer-events: none;
     }
-    .animate-shimmer { animation: sweep 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-    @keyframes sweep { 100% { left: 200%; } }
 
-    /* Temaların İçeri Akma Animasyonu (Staggered Fade) */
+    /* Cam ikonlar */
+    .glass-icon {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border: 1px solid rgba(var(--theme-rgb), 0.35);
+      box-shadow:
+        inset 0 0 14px rgba(var(--theme-rgb), 0.12),
+        0 10px 28px rgba(0, 0, 0, 0.45);
+      transition: all 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .glass-icon:active {
+      transform: scale(0.9);
+      border-color: rgba(var(--theme-rgb), 0.85);
+      box-shadow: inset 0 0 18px rgba(var(--theme-rgb), 0.25);
+    }
+
+    /* Üst butonlar */
+    .top-bar {
+      position: absolute;
+      top: 2rem;
+      width: 100%;
+      max-width: 28rem;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar button {
+      width: 3.1rem;
+      height: 3.1rem;
+      border-radius: 1.1rem;
+      font-size: 1.35rem;
+      pointer-events: auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+    }
+
+    /* Ana ada */
+    #hero-island {
+      background: radial-gradient(130% 130% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 100%);
+      backdrop-filter: blur(48px) saturate(190%);
+      -webkit-backdrop-filter: blur(48px) saturate(190%);
+      border: 1px solid rgba(var(--theme-rgb), 0.42);
+      box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.22),
+        inset 0 -3px 14px rgba(var(--theme-rgb), 0.12),
+        0 14px 48px rgba(var(--theme-rgb), 0.22);
+      transition: all 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+      position: relative;
+      overflow: hidden;
+      will-change: width, height, border-radius;
+    }
+
+    .island-circle {
+      width: 13.5rem;
+      height: 13.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .island-circle:active {
+      transform: scale(0.955);
+      box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.22),
+        inset 0 0 28px rgba(var(--theme-rgb), 0.32),
+        0 6px 24px rgba(var(--theme-rgb), 0.15);
+    }
+
+    .island-panel {
+      width: 21.5rem;
+      min-height: 25.5rem;
+      border-radius: 1.85rem;
+      cursor: default;
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #island-content {
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+    }
+    #island-content.show {
+      display: flex;
+    }
+
+    #hero-icon {
+      font-size: 3.8rem;
+      color: white;
+      filter: drop-shadow(0 0 18px rgba(var(--theme-rgb), 0.85));
+      pointer-events: none;
+      transition: opacity 0.32s ease;
+    }
+
+    /* Sayaç */
+    #counter-container {
+      text-align: center;
+      transition: transform 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+      margin-top: 1.4rem;
+    }
+    #counter {
+      font-size: clamp(3.2rem, 12vw, 5.2rem);
+      line-height: 1;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: -0.04em;
+      text-shadow: 0 0 36px rgba(var(--theme-rgb), 0.65);
+      color: rgb(var(--theme-rgb));
+    }
+    #counter-container p {
+      font-size: 0.65rem;
+      font-family: ui-monospace, monospace;
+      letter-spacing: 0.32em;
+      color: rgba(255, 255, 255, 0.28);
+      text-transform: uppercase;
+      margin-top: 0.55rem;
+    }
+
+    /* Alt sıfırlama butonu */
+    .bottom-bar {
+      position: absolute;
+      bottom: 2.4rem;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .bottom-bar button {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 1.35rem;
+      font-size: 1.45rem;
+      color: #f87171;
+      pointer-events: auto;
+      background: none;
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      cursor: pointer;
+    }
+
+    /* Uyarı */
+    #warning-box {
+      position: absolute;
+      top: 6.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(127, 29, 29, 0.45);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(239, 68, 68, 0.55);
+      color: #fecaca;
+      padding: 0.85rem 1.6rem;
+      border-radius: 1.1rem;
+      font-size: 0.72rem;
+      font-family: ui-monospace, monospace;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      white-space: nowrap;
+    }
+    #warning-box.show {
+      opacity: 1;
+    }
+
+    /* Uçan ikon */
+    .flying-icon {
+      position: fixed;
+      z-index: 100;
+      transition: transform 0.62s cubic-bezier(0.45, 0, 0.15, 1), opacity 0.62s ease;
+      pointer-events: none;
+    }
+
+    /* Shimmer */
+    .shimmer-wave {
+      position: absolute;
+      top: 0;
+      left: -160%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+      transform: skewX(-22deg);
+      pointer-events: none;
+    }
+    .animate-shimmer {
+      animation: sweep 0.72s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    @keyframes sweep {
+      100% { left: 210%; }
+    }
+
+    /* Stagger */
     .stagger-item {
-      opacity: 0; transform: translateY(15px);
-      animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: slideUpFade 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    @keyframes slideUpFade { 
-      to { opacity: 1; transform: translateY(0); } 
+    @keyframes slideUpFade {
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Özel Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: rgba(var(--theme-rgb), 0.5); border-radius: 4px; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(var(--theme-rgb), 0.55);
+      border-radius: 4px;
+    }
+
+    /* Menü içi */
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .menu-header h3 {
+      color: rgba(255, 255, 255, 0.78);
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .menu-header button {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.2rem;
+    }
+    .menu-header button:hover { color: white; }
+
+    .theme-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 0.9rem;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.22);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .theme-item:hover { background: rgba(255, 255, 255, 0.09); }
+    .theme-item .left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .theme-item .name {
+      font-size: 0.78rem;
+      font-family: ui-monospace, monospace;
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .theme-dot {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+    }
+
+    .lb-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 0.9rem;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 0.9rem;
+    }
+    .lb-item.me {
+      border-color: rgba(var(--theme-rgb), 0.5);
+      background: rgba(var(--theme-rgb), 0.12);
+    }
+
+    input#lb-name {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.9rem;
+      padding: 0.85rem 1rem;
+      font-size: 0.9rem;
+      color: white;
+      outline: none;
+      font-family: ui-monospace, monospace;
+      transition: border-color 0.2s;
+    }
+    input#lb-name:focus {
+      border-color: rgba(var(--theme-rgb), 0.9);
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 0.85rem;
+      border-radius: 0.9rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      cursor: pointer;
+      border: 1px solid;
+      transition: background 0.2s;
+    }
   </style>
 </head>
-<body class="w-screen h-screen relative flex justify-center">
+<body>
 
   <canvas id="space-canvas"></canvas>
 
-  <!-- ÜST SABİT BUTONLAR -->
-  <div class="absolute top-8 w-full px-8 flex justify-between z-20 pointer-events-none max-w-md mx-auto">
-    <!-- Liderlik (Orta-Sol) -->
-    <button id="btn-leaderboard" onclick="triggerMorph(this, 'leaderboard')" class="glass-icon w-12 h-12 rounded-2xl flex items-center justify-center text-xl pointer-events-auto">
-      🏆
-    </button>
-    <!-- Temalar (Orta-Sağ) -->
-    <button id="btn-themes" onclick="triggerMorph(this, 'themes')" class="glass-icon w-12 h-12 rounded-2xl flex items-center justify-center text-xl pointer-events-auto">
-      🎨
-    </button>
+  <!-- ÜST BUTONLAR -->
+  <div class="top-bar">
+    <button id="btn-leaderboard" class="glass-icon" onclick="triggerMorph(this, 'leaderboard')">🏆</button>
+    <button id="btn-themes" class="glass-icon" onclick="triggerMorph(this, 'themes')">🎨</button>
   </div>
 
-  <!-- MERKEZ ALAN (Buton ve Sayaç Flex Grubu) -->
-  <main class="relative z-10 flex flex-col items-center justify-center h-full w-full max-w-md gap-6">
+  <!-- MERKEZ -->
+  <main style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;max-width:28rem;gap:0.5rem;">
     
-    <!-- Dinamik Ada (Tıklama Dairesi / Panel) -->
-    <div id="hero-island" class="island-circle" onmousedown="handleMainClick()" ontouchstart="handleMainClick(event)">
-      <!-- Sadece panel modunda görünecek içerik alanı -->
-      <div id="island-content" class="w-full h-full hidden flex-col"></div>
-      
-      <!-- Merkezi Yıldırım/Güç İkonu (Daire modunda) -->
-      <div id="hero-icon" class="text-6xl text-white drop-shadow-[0_0_15px_rgba(var(--theme-rgb),0.8)] pointer-events-none transition-opacity duration-300">
-        ⚡
-      </div>
+    <div id="hero-island" class="island-circle" onmousedown="handleMainClick(event)" ontouchstart="handleMainClick(event)">
+      <div id="island-content"></div>
+      <div id="hero-icon">⚡</div>
     </div>
 
-    <!-- Sayaç (Panel açılınca doğal olarak Flex ile aşağı kayar) -->
-    <div id="counter-container" class="text-center transition-all">
-      <div id="counter" class="text-[5rem] leading-none font-black font-mono tracking-tighter" style="text-shadow: 0 0 30px rgba(var(--theme-rgb), 0.6); color: rgb(var(--theme-rgb));">
-        0
-      </div>
-      <p class="text-[10px] font-mono tracking-[0.3em] text-white/30 uppercase mt-2">Enerji Seviyesi</p>
+    <div id="counter-container">
+      <div id="counter">0</div>
+      <p>Enerji Seviyesi</p>
     </div>
-
   </main>
 
-  <!-- ALT SABİT BUTON (Sıfırlama) -->
-  <div class="absolute bottom-10 w-full flex justify-center z-20 pointer-events-none">
-    <button id="btn-reset" onclick="triggerMorph(this, 'reset')" class="glass-icon w-14 h-14 rounded-3xl flex items-center justify-center text-xl text-red-400 pointer-events-auto border-red-500/30">
-      ⟲
-    </button>
+  <!-- ALT SIFIRLAMA -->
+  <div class="bottom-bar">
+    <button id="btn-reset" class="glass-icon" onclick="triggerMorph(this, 'reset')">⟲</button>
   </div>
 
-  <!-- AutoClicker Uyarısı -->
-  <div id="warning-box" class="absolute top-24 left-1/2 transform -translate-x-1/2 glass-icon bg-red-900/40 border-red-500/50 text-red-200 px-6 py-3 rounded-2xl text-xs font-mono z-50 hidden opacity-0 transition-opacity">
-    SİSTEM KİLİTLENDİ: İnsanüstü Hız Algılandı!
-  </div>
+  <!-- UYARI -->
+  <div id="warning-box">SİSTEM KİLİTLENDİ: İnsanüstü Hız Algılandı!</div>
 
   <script>
-    /* -------------------------------------------------------------------------- */
-    /* 1. MİMARİ VE VERİ YÖNETİMİ */
-    /* -------------------------------------------------------------------------- */
     const DB_URL = "https://kvdb.io/4y9X6p1kG9xN7Z3mQ8W2vL/apex_leaderboard";
     let deviceId = localStorage.getItem('apx_id') || crypto.randomUUID();
     localStorage.setItem('apx_id', deviceId);
@@ -167,7 +398,6 @@
     let clickTimestamps = [];
     let isBlocked = false;
 
-    // Arayüz Elementleri
     const heroIsland = document.getElementById('hero-island');
     const heroIcon = document.getElementById('hero-icon');
     const islandContent = document.getElementById('island-content');
@@ -185,117 +415,97 @@
       { id: '8', name: 'Sonsuzluk Yakutu', rgb: '225, 29, 72', icon: '♦️' }
     ];
 
-    // Cihazın temasını yükle
     let currentTheme = localStorage.getItem('apx_theme') || '168, 85, 247';
     document.documentElement.style.setProperty('--theme-rgb', currentTheme);
 
-    /* Ses Motoru (Sadece tıklama dairesiyken çalışır) */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playLiquidClick() {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+      osc.frequency.setValueAtTime(820, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(280, audioCtx.currentTime + 0.055);
+      gain.gain.setValueAtTime(0.11, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.008, audioCtx.currentTime + 0.055);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.05);
+      osc.stop(audioCtx.currentTime + 0.055);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /* 2. DİNAMİK ADA (MORPH) VE GÖRSEL FİZİK ANİMASYONLARI */
-    /* -------------------------------------------------------------------------- */
-
     function triggerMorph(buttonEl, menuType) {
-      if (isPanelOpen) return; // Zaten açıksa işlem yapma
+      if (isPanelOpen) return;
       isPanelOpen = true;
 
-      // 1. Uçan İkon Animasyonu
       const rect = buttonEl.getBoundingClientRect();
       const clone = buttonEl.cloneNode(true);
       clone.className = buttonEl.className + ' flying-icon';
       clone.style.left = rect.left + 'px';
       clone.style.top = rect.top + 'px';
       clone.style.margin = '0';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
       document.body.appendChild(clone);
 
-      // Ada merkezini bul
       const islandRect = heroIsland.getBoundingClientRect();
       const centerX = islandRect.left + (islandRect.width / 2) - (rect.width / 2);
       const centerY = islandRect.top + (islandRect.height / 2) - (rect.height / 2);
 
-      // Frame atla ve animasyonu başlat
       requestAnimationFrame(() => {
-        clone.style.transform = `translate(${centerX - rect.left}px, ${centerY - rect.top}px) rotate(720deg) scale(0.2)`;
+        clone.style.transform = `translate(${centerX - rect.left}px, ${centerY - rect.top}px) rotate(720deg) scale(0.15)`;
         clone.style.opacity = '0';
       });
 
-      // 2. İkon hedefe ulaştığında...
       setTimeout(() => {
         clone.remove();
         
-        // Şimmer Efekti Tetikle
         const shimmer = document.createElement('div');
         shimmer.className = 'shimmer-wave animate-shimmer';
         heroIsland.appendChild(shimmer);
-        setTimeout(() => shimmer.remove(), 700);
+        setTimeout(() => shimmer.remove(), 720);
 
-        // Adayı Genişlet (Morph)
         heroIcon.style.opacity = '0';
         heroIsland.classList.remove('island-circle');
         heroIsland.classList.add('island-panel');
 
-        // İçeriği Gecikmeli Yükle
         setTimeout(() => {
-          heroIcon.classList.add('hidden');
-          islandContent.classList.remove('hidden');
-          islandContent.classList.add('flex');
+          heroIcon.style.display = 'none';
+          islandContent.classList.add('show');
           renderMenu(menuType);
-        }, 300); // Ada büyüme süresinin yarısında içeriği göster
-
-      }, 600); // CSS transform süresi
+        }, 320);
+      }, 620);
     }
 
     function closePanel() {
-      islandContent.classList.remove('flex');
-      islandContent.classList.add('hidden');
+      islandContent.classList.remove('show');
       islandContent.innerHTML = '';
       
       heroIsland.classList.remove('island-panel');
       heroIsland.classList.add('island-circle');
       
-      heroIcon.classList.remove('hidden');
-      setTimeout(() => { heroIcon.style.opacity = '1'; }, 100);
+      heroIcon.style.display = 'block';
+      setTimeout(() => { heroIcon.style.opacity = '1'; }, 80);
       
-      setTimeout(() => { isPanelOpen = false; }, 650);
+      setTimeout(() => { isPanelOpen = false; }, 700);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /* 3. MENÜ İÇERİKLERİNİN RENDER EDİLMESİ (Staggered Fade) */
-    /* -------------------------------------------------------------------------- */
-
     function renderMenu(type) {
-      let html = `<div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                    <h3 class="text-white/80 font-mono text-sm tracking-widest uppercase">`;
+      let html = `<div class="menu-header"><h3>`;
 
       if (type === 'themes') {
-        html += `Mekan Teması</h3><button onclick="closePanel()" class="text-white/40 hover:text-white">✕</button></div>`;
-        html += `<div class="flex-1 overflow-y-auto pr-2 space-y-2">`;
+        html += `Mekan Teması</h3><button onclick="closePanel()">✕</button></div>`;
+        html += `<div style="flex:1;overflow-y:auto;padding-right:0.4rem;display:flex;flex-direction:column;gap:0.45rem;">`;
         
-        // Temaları milisaniye gecikmeli (stagger) oluştur
         themes.forEach((t, index) => {
-          const delay = index * 30; // Her biri 30ms daha geç gelir
+          const delay = index * 32;
           html += `
-            <div onclick="applyTheme('${t.rgb}')" class="stagger-item flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/20 hover:bg-white/10 cursor-pointer transition-colors" style="animation-delay: ${delay}ms;">
-              <div class="flex items-center gap-3">
-                <span class="text-lg">${t.icon}</span>
-                <span class="text-xs font-mono text-white/80">${t.name}</span>
+            <div onclick="applyTheme('\( {t.rgb}')" class="stagger-item theme-item" style="animation-delay: \){delay}ms;">
+              <div class="left">
+                <span style="font-size:1.15rem">${t.icon}</span>
+                <span class="name">${t.name}</span>
               </div>
-              <div class="w-4 h-4 rounded-full" style="background: rgb(${t.rgb}); box-shadow: 0 0 10px rgba(${t.rgb}, 0.8)"></div>
+              <div class="theme-dot" style="background:rgb(\( {t.rgb});box-shadow:0 0 12px rgba( \){t.rgb},0.85)"></div>
             </div>`;
         });
         html += `</div>`;
@@ -303,33 +513,33 @@
       } 
       
       else if (type === 'reset') {
-        html += `SİSTEM SIFIRLAMA</h3><button onclick="closePanel()" class="text-white/40 hover:text-white">✕</button></div>`;
+        html += `SİSTEM SIFIRLAMA</h3><button onclick="closePanel()">✕</button></div>`;
         html += `
-          <div class="flex-1 flex flex-col items-center justify-center text-center stagger-item" style="animation-delay: 50ms;">
-            <p class="text-sm font-mono text-red-300 mb-6 px-4">Sayacı kalıcı olarak sıfırlamak istediğinize emin misiniz?</p>
-            <div class="flex gap-3 w-full">
-              <button onclick="executeReset()" class="flex-1 glass-icon bg-red-900/30 border-red-500/30 text-red-300 py-3 rounded-xl font-mono text-xs hover:bg-red-900/60">Evet, Sıfırla</button>
-              <button onclick="closePanel()" class="flex-1 glass-icon bg-white/5 border-white/10 text-white/80 py-3 rounded-xl font-mono text-xs hover:bg-white/10">İptal</button>
+          <div class="stagger-item" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation-delay:50ms;">
+            <p style="font-size:0.88rem;font-family:ui-monospace,monospace;color:#fca5a5;margin-bottom:1.6rem;padding:0 0.8rem;line-height:1.45;">
+              Sayacı kalıcı olarak sıfırlamak istediğine emin misin?
+            </p>
+            <div style="display:flex;gap:0.7rem;width:100%;">
+              <button onclick="executeReset()" class="action-btn" style="background:rgba(127,29,29,0.35);border-color:rgba(239,68,68,0.4);color:#fca5a5;">Evet, Sıfırla</button>
+              <button onclick="closePanel()" class="action-btn" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);">İptal</button>
             </div>
           </div>`;
         islandContent.innerHTML = html;
       }
 
       else if (type === 'leaderboard') {
-        html += `KÜRESEL AĞ</h3><button onclick="closePanel()" class="text-white/40 hover:text-white">✕</button></div>`;
+        html += `KÜRESEL AĞ</h3><button onclick="closePanel()">✕</button></div>`;
         
-        // İsim girilmemişse
         if (!userName) {
           html += `
-            <div class="flex flex-col gap-3 mt-4 stagger-item" style="animation-delay: 50ms;">
-              <p class="text-xs font-mono text-white/50">Ağa katılmak için kimlik oluşturun:</p>
-              <input id="lb-name" type="text" maxlength="15" placeholder="Siber Adınız..." class="w-full bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[rgba(var(--theme-rgb),1)] font-mono transition-colors">
-              <button onclick="saveNameAndLoad()" class="w-full glass-icon bg-white/10 py-3 rounded-xl text-xs font-bold tracking-wider text-white">BAĞLAN</button>
+            <div class="stagger-item" style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;animation-delay:50ms;">
+              <p style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.48);">Ağa katılmak için kimlik oluştur:</p>
+              <input id="lb-name" type="text" maxlength="15" placeholder="Siber Adın...">
+              <button onclick="saveNameAndLoad()" class="action-btn" style="width:100%;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:white;font-weight:700;letter-spacing:0.08em;">BAĞLAN</button>
             </div>`;
           islandContent.innerHTML = html;
         } else {
-          // Liderlik Tablosunu Yükle
-          islandContent.innerHTML = html + `<div id="lb-list" class="flex-1 overflow-y-auto space-y-2 pr-1"><p class="text-center text-white/30 text-xs font-mono mt-10 animate-pulse">Veritabanı Senkronize Ediliyor...</p></div>`;
+          islandContent.innerHTML = html + `<div id="lb-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.3rem;"><p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Veritabanı Senkronize Ediliyor...</p></div>`;
           fetchLeaderboard();
         }
       }
@@ -357,13 +567,11 @@
       renderMenu('leaderboard');
     }
 
-    /* Güvenli ve Timeout Korumalı Liderlik Çekimi */
     async function fetchLeaderboard() {
       const container = document.getElementById('lb-list');
       try {
-        // 3 Saniye Timeout Koruması
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 3200);
         
         const res = await fetch(DB_URL, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -372,58 +580,153 @@
         const list = await res.json();
 
         if (!list || list.length === 0) {
-          container.innerHTML = `<p class="text-center text-white/30 text-xs font-mono mt-10">Ağ boş. İlk izi sen bırak.</p>`;
+          container.innerHTML = `<p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Ağ boş. İlk izi sen bırak.</p>`;
           return;
         }
 
         container.innerHTML = list.map((item, i) => {
-          const delay = i * 20;
+          const delay = i * 22;
+          const rankColor = i===0 ? '#facc15' : i===1 ? '#d1d5db' : i===2 ? '#d97706' : 'rgba(255,255,255,0.28)';
           return `
-            <div class="stagger-item flex justify-between items-center p-3 bg-black/20 border border-white/5 rounded-xl ${item.id === deviceId ? 'border-[rgba(var(--theme-rgb),0.5)] bg-[rgba(var(--theme-rgb),0.1)]' : ''}" style="animation-delay: ${delay}ms;">
-              <div class="flex items-center gap-3">
-                <span class="font-bold text-xs ${i===0?'text-yellow-400':i===1?'text-gray-300':i===2?'text-amber-600':'text-white/30'}">#${i+1}</span>
-                <span class="text-xs font-mono text-white/80">${item.name} ${item.id === deviceId ? '(Sen)' : ''}</span>
+            <div class="stagger-item lb-item \( {item.id === deviceId ? 'me' : ''}" style="animation-delay: \){delay}ms;">
+              <div style="display:flex;align-items:center;gap:0.7rem;">
+                <span style="font-weight:700;font-size:0.78rem;color:\( {rankColor};"># \){i+1}</span>
+                <span style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.82);">\( {item.name} \){item.id === deviceId ? ' (Sen)' : ''}</span>
               </div>
-              <span class="text-xs font-bold text-[rgb(var(--theme-rgb))]">${item.score.toLocaleString('tr-TR')}</span>
+              <span style="font-size:0.78rem;font-weight:700;color:rgb(var(--theme-rgb));">${item.score.toLocaleString('tr-TR')}</span>
             </div>`;
         }).join('');
 
       } catch (e) {
-        // KVDB başarısız olursa arayüz takılmasın, yerel veriyi göstersin
         container.innerHTML = `
-          <div class="stagger-item p-3 bg-black/20 border border-white/5 rounded-xl mt-4">
-            <p class="text-[10px] text-red-400 font-mono mb-2">Bulut bağlantısı koptu. Yerel veri gösteriliyor:</p>
-            <div class="flex justify-between">
-              <span class="text-xs text-white/80">${userName} (Sen)</span>
-              <span class="text-xs text-[rgb(var(--theme-rgb))]">${count.toLocaleString('tr-TR')}</span>
+          <div class="stagger-item<div onclick="applyTheme('\( {t.rgb}')" class="stagger-item theme-item" style="animation-delay: \){delay}ms;">
+              <div class="left">
+                <span style="font-size:1.15rem">${t.icon}</span>
+                <span class="name">${t.name}</span>
+              </div>
+              <div class="theme-dot" style="background:rgb(\( {t.rgb});box-shadow:0 0 12px rgba( \){t.rgb},0.85)"></div>
+            </div>`;
+        });
+        html += `</div>`;
+        islandContent.innerHTML = html;
+      } 
+      
+      else if (type === 'reset') {
+        html += `SİSTEM SIFIRLAMA</h3><button onclick="closePanel()">✕</button></div>`;
+        html += `
+          <div class="stagger-item" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation-delay:50ms;">
+            <p style="font-size:0.88rem;font-family:ui-monospace,monospace;color:#fca5a5;margin-bottom:1.6rem;padding:0 0.8rem;line-height:1.45;">
+              Sayacı kalıcı olarak sıfırlamak istediğine emin misin?
+            </p>
+            <div style="display:flex;gap:0.7rem;width:100%;">
+              <button onclick="executeReset()" class="action-btn" style="background:rgba(127,29,29,0.35);border-color:rgba(239,68,68,0.4);color:#fca5a5;">Evet, Sıfırla</button>
+              <button onclick="closePanel()" class="action-btn" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);">İptal</button>
+            </div>
+          </div>`;
+        islandContent.innerHTML = html;
+      }
+
+      else if (type === 'leaderboard') {
+        html += `KÜRESEL AĞ</h3><button onclick="closePanel()">✕</button></div>`;
+        
+        if (!userName) {
+          html += `
+            <div class="stagger-item" style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;animation-delay:50ms;">
+              <p style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.48);">Ağa katılmak için kimlik oluştur:</p>
+              <input id="lb-name" type="text" maxlength="15" placeholder="Siber Adın...">
+              <button onclick="saveNameAndLoad()" class="action-btn" style="width:100%;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:white;font-weight:700;letter-spacing:0.08em;">BAĞLAN</button>
+            </div>`;
+          islandContent.innerHTML = html;
+        } else {
+          islandContent.innerHTML = html + `<div id="lb-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.3rem;"><p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Veritabanı Senkronize Ediliyor...</p></div>`;
+          fetchLeaderboard();
+        }
+      }
+    }
+
+    function applyTheme(rgb) {
+      document.documentElement.style.setProperty('--theme-rgb', rgb);
+      localStorage.setItem('apx_theme', rgb);
+      closePanel();
+    }
+
+    function executeReset() {
+      count = 0;
+      counterEl.innerText = "0";
+      localStorage.setItem('apx_cnt', 0);
+      syncToCloud();
+      closePanel();
+    }
+
+    function saveNameAndLoad() {
+      const v = document.getElementById('lb-name').value.trim();
+      if (!v) return;
+      userName = v;
+      localStorage.setItem('apx_name', userName);
+      renderMenu('leaderboard');
+    }
+
+    async function fetchLeaderboard() {
+      const container = document.getElementById('lb-list');
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3200);
+        
+        const res = await fetch(DB_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) throw new Error("Ağ hatası");
+        const list = await res.json();
+
+        if (!list || list.length === 0) {
+          container.innerHTML = `<p style="text-align:center;color:rgba(255,255,255,0.28);font-size:0.75rem;font-family:ui-monospace,monospace;margin-top:2.5rem;" class="stagger-item">Ağ boş. İlk izi sen bırak.</p>`;
+          return;
+        }
+
+        container.innerHTML = list.map((item, i) => {
+          const delay = i * 22;
+          const rankColor = i===0 ? '#facc15' : i===1 ? '#d1d5db' : i===2 ? '#d97706' : 'rgba(255,255,255,0.28)';
+          return `
+            <div class="stagger-item lb-item \( {item.id === deviceId ? 'me' : ''}" style="animation-delay: \){delay}ms;">
+              <div style="display:flex;align-items:center;gap:0.7rem;">
+                <span style="font-weight:700;font-size:0.78rem;color:\( {rankColor};"># \){i+1}</span>
+                <span style="font-size:0.78rem;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.82);">\( {item.name} \){item.id === deviceId ? ' (Sen)' : ''}</span>
+              </div>
+              <span style="font-size:0.78rem;font-weight:700;color:rgb(var(--theme-rgb));">${item.score.toLocaleString('tr-TR')}</span>
+            </div>`;
+        }).join('');
+
+      } catch (e) {
+        container.innerHTML = `
+          <div class="stagger-item lb-item" style="margin-top:1rem;">
+            <div>
+              <p style="font-size:0.65rem;color:#f87171;font-family:ui-monospace,monospace;margin-bottom:0.4rem;">Bulut bağlantısı koptu. Yerel veri:</p>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:0.78rem;color:rgba(255,255,255,0.82);">${userName} (Sen)</span>
+                <span style="font-size:0.78rem;color:rgb(var(--theme-rgb));">${count.toLocaleString('tr-TR')}</span>
+              </div>
             </div>
           </div>`;
       }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /* 4. TIKLAMA, MAKRO KORUMASI VE BULUT SENKRONİZASYONU */
-    /* -------------------------------------------------------------------------- */
-    
     function handleMainClick(e) {
       if (e) e.preventDefault();
-      if (isPanelOpen || isBlocked) return; // Panel açıksa sayaç artmaz
+      if (isPanelOpen || isBlocked) return;
 
       const now = Date.now();
       clickTimestamps.push(now);
       clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
 
-      // 18 CPS Sınırı (AutoClicker/Makro)
       if (clickTimestamps.length > 18) {
         isBlocked = true;
         const warnBox = document.getElementById('warning-box');
-        warnBox.classList.remove('hidden');
-        setTimeout(() => warnBox.style.opacity = '1', 10);
+        warnBox.classList.add('show');
         
         setTimeout(() => {
-          warnBox.style.opacity = '0';
-          setTimeout(() => { warnBox.classList.add('hidden'); isBlocked = false; clickTimestamps = []; }, 300);
-        }, 5000);
+          warnBox.classList.remove('show');
+          setTimeout(() => { isBlocked = false; clickTimestamps = []; }, 350);
+        }, 4800);
         return;
       }
 
@@ -432,9 +735,7 @@
       localStorage.setItem('apx_cnt', count);
       playLiquidClick();
 
-      // Yıldız hızını artır
-      particleSpeedMultiplier = Math.min(clickTimestamps.length * 1.5, 12);
-
+      particleSpeedMultiplier = Math.min(clickTimestamps.length * 1.55, 13);
       syncToCloud();
     }
 
@@ -455,16 +756,13 @@
           } else {
             list.push({ id: deviceId, name: userName, score: count });
           }
-      list.sort((a, b) => b.score - a.score);
+          list.sort((a, b) => b.score - a.score);
           await fetch(DB_URL, { method: 'POST', body: JSON.stringify(list.slice(0, 50)) });
         } catch (e) {}
-      }, 2500); // Tıklamalar bittikten 2.5 sn sonra senkronize et (sunucuyu yormamak için)
+      }, 2600);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /* 5. CANVAS - ADAPTİF UZAY / YILDIZ AKIŞI */
-    /* -------------------------------------------------------------------------- */
-    
+    /* Canvas yıldızlar */
     const canvas = document.getElementById('space-canvas');
     const ctx = canvas.getContext('2d');
     let width = canvas.width = window.innerWidth;
@@ -475,9 +773,9 @@
       height = canvas.height = window.innerHeight;
     });
 
-    let stars = Array.from({ length: 150 }, () => ({
-      x: (Math.random() - 0.5) * width * 2,
-      y: (Math.random() - 0.5) * height * 2,
+    let stars = Array.from({ length: 160 }, () => ({
+      x: (Math.random() - 0.5) * width * 2.2,
+      y: (Math.random() - 0.5) * height * 2.2,
       z: Math.random() * width
     }));
 
@@ -488,34 +786,35 @@
       const cx = width / 2;
       const cy = height / 2;
 
-      // Hız zamanla yavaşça normale (1) döner
-      particleSpeedMultiplier = Math.max(1, particleSpeedMultiplier * 0.96);
+      particleSpeedMultiplier = Math.max(1, particleSpeedMultiplier * 0.955);
 
       stars.forEach(s => {
-        s.z -= 1.5 * particleSpeedMultiplier;
-        if (s.z <= 0) { s.z = width; s.x = (Math.random() - 0.5) * width * 2; s.y = (Math.random() - 0.5) * height * 2; }
+        s.z -= 1.55 * particleSpeedMultiplier;
+        if (s.z <= 0) {
+          s.z = width;
+          s.x = (Math.random() - 0.5) * width * 2.2;
+          s.y = (Math.random() - 0.5) * height * 2.2;
+        }
 
         const k = 128 / s.z;
         const px = s.x * k + cx;
         const py = s.y * k + cy;
 
         if (px >= 0 && px < width && py >= 0 && py < height) {
-          const size = Math.max(0.5, (1 - s.z / width) * 2.5);
-          const alpha = (1 - s.z / width) * 0.8;
+          const size = Math.max(0.45, (1 - s.z / width) * 2.6);
+          const alpha = (1 - s.z / width) * 0.82;
           
-          if (particleSpeedMultiplier > 2.5) {
-            // Işık Hızı Çizgi Efekti
-            const tailX = (s.x * (128 / (s.z + particleSpeedMultiplier * 6))) + cx;
-            const tailY = (s.y * (128 / (s.z + particleSpeedMultiplier * 6))) + cy;
+          if (particleSpeedMultiplier > 2.6) {
+            const tailX = (s.x * (128 / (s.z + particleSpeedMultiplier * 7))) + cx;
+            const tailY = (s.y * (128 / (s.z + particleSpeedMultiplier * 7))) + cy;
             ctx.beginPath();
             ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = size * 0.8;
+            ctx.lineWidth = size * 0.75;
             ctx.lineCap = "round";
             ctx.moveTo(px, py);
             ctx.lineTo(tailX, tailY);
             ctx.stroke();
           } else {
-            // Normal Yıldız
             ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
             ctx.beginPath();
             ctx.arc(px, py, size, 0, Math.PI * 2);
