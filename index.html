@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Apex Clicker // Siber Rekabet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { select-none: none; -webkit-user-select: none; }
+    body { background-color: #030712; color: #f3f4f6; overflow: hidden; touch-action: manipulation; font-family: system-ui, -apple-system, sans-serif; }
+
+    /* Canvas Arka Plan */
+    #space-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+
+    /* Glassmorphism Panel */
+    .glass { background: rgba(17, 24, 39, 0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+
+    /* 3D Buton Stili ve Fiziği */
+    .btn-3d {
+      background: linear-gradient(145deg, var(--theme-accent-light), var(--theme-accent-dark));
+      box-shadow: 0 12px 0 var(--theme-shadow), 0 20px 30px rgba(0,0,0,0.5);
+      transition: all 0.05s ease;
+    }
+    .btn-3d:active {
+      transform: translateY(8px);
+      box-shadow: 0 4px 0 var(--theme-shadow), 0 10px 15px rgba(0,0,0,0.4);
+    }
+
+    /* Sıfırlama Kutusu Animasyonu */
+    .reset-container { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* Temalar */
+    :root {
+      --theme-accent-light: #10b981;
+      --theme-accent-dark: #047857;
+      --theme-shadow: #064e3b;
+      --theme-text: #34d399;
+    }
+    body[data-theme="pink"] {
+      --theme-accent-light: #ec4899;
+      --theme-accent-dark: #be185d;
+      --theme-shadow: #831843;
+      --theme-text: #f472b6;
+    }
+    body[data-theme="blue"] {
+      --theme-accent-light: #3b82f6;
+      --theme-accent-dark: #1d4ed8;
+      --theme-shadow: #1e3a8a;
+      --theme-text: #60a5fa;
+    }
+    body[data-theme="amber"] {
+      --theme-accent-light: #f59e0b;
+      --theme-accent-dark: #b45309;
+      --theme-shadow: #78350f;
+      --theme-text: #fbbf24;
+    }
+  </style>
+</head>
+<body data-theme="emerald" class="h-screen w-screen relative flex flex-col items-center justify-between p-6">
+
+  <!-- Arka Plan Uzay Parçacık Canvası -->
+  <canvas id="space-canvas"></canvas>
+
+  <!-- ÜST BAR: Liderlik & Tema Değiştirici -->
+  <header class="w-full max-w-md flex justify-between items-center z-10">
+    <button onclick="openLeaderboard()" class="glass px-4 py-2.5 rounded-2xl flex items-center gap-2 border border-white/10 hover:border-white/20 active:scale-95 transition-all">
+      <span class="text-lg">🏆</span>
+      <span class="text-xs font-bold tracking-wider font-mono text-white">LİDERLİK TABLOSU</span>
+    </button>
+
+    <!-- Tema Seçici Açılır Menü -->
+    <select id="theme-select" onchange="changeTheme(this.value)" class="glass px-3 py-2 rounded-2xl text-xs font-mono font-bold text-white outline-none border border-white/10 cursor-pointer">
+      <option value="emerald" class="bg-gray-900 text-emerald-400">🌲 Zümrüt Derinliği</option>
+      <option value="pink" class="bg-gray-900 text-pink-400">🌸 Pembe Kuvars</option>
+      <option value="blue" class="bg-gray-900 text-blue-400">🌊 Gece Safiri</option>
+      <option value="amber" class="bg-gray-900 text-amber-400">✨ Kehribar Işıltısı</option>
+    </select>
+  </header>
+
+  <!-- ORTA ALAN: Sayaç & 3D Buton -->
+  <main class="w-full max-w-md flex flex-col items-center justify-center z-10 my-auto gap-8">
+    
+    <!-- Sayaç Göstergesi -->
+    <div class="text-center space-y-1">
+      <p class="text-xs font-mono uppercase tracking-widest text-white/40">Mevcut Tıklama</p>
+      <div id="counter" class="text-6xl font-black font-mono tracking-tight transition-all duration-75" style="color: var(--theme-text);">
+        0
+      </div>
+    </div>
+
+    <!-- 3D Ana Buton -->
+    <div id="click-btn" onmousedown="handleClick()" ontouchstart="handleClick(event)" class="btn-3d w-48 h-48 rounded-full flex items-center justify-center cursor-pointer select-none relative">
+      <span class="text-4xl pointer-events-none">⚡</span>
+    </div>
+
+    <!-- AutoClicker Uyarı Mesajı -->
+    <div id="warning-box" class="hidden glass bg-red-500/20 border-red-500/50 text-red-300 px-4 py-2.5 rounded-2xl text-xs font-mono text-center animate-bounce">
+      🚫 Makro/AutoClicker algılandı! 5 saniye bekleyin.
+    </div>
+
+  </main>
+
+  <!-- ALT ALAN: Akıllı Sıfırlama Butonu -->
+  <footer class="w-full max-w-md z-10 flex flex-col items-center mb-2">
+    <div id="reset-wrapper" class="reset-container w-full flex justify-center">
+      <button id="reset-init-btn" onclick="expandReset()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-6 py-2.5 rounded-2xl text-xs font-mono font-bold tracking-wider active:scale-95 transition-all">
+        SAYACI SIFIRLA
+      </button>
+
+      <!-- Dönüşen Onay Kutusu (Başlangıçta Gizli) -->
+      <div id="reset-confirm-box" class="hidden glass border-red-500/40 p-4 rounded-3xl w-full flex flex-col items-center gap-3 text-center">
+        <p class="text-xs text-red-200 font-mono font-semibold">Sayacı sıfırlamak istediğinize emin misiniz?</p>
+        <div class="flex gap-2 w-full">
+          <button onclick="confirmReset()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl text-xs font-mono font-bold">EVET, SIFIRLA</button>
+          <button onclick="collapseReset()" class="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-xs font-mono font-bold">İPTAL</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- LİDERLİK TABLOSU MODAL -->
+  <div id="leaderboard-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass w-full max-w-md p-6 rounded-3xl flex flex-col max-h-[80vh] border border-white/15">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+        <h3 class="text-lg font-bold font-mono text-white flex items-center gap-2">🏆 Liderlik Tablosu</h3>
+        <button onclick="closeLeaderboard()" class="text-white/50 hover:text-white font-mono text-xl">✕</button>
+      </div>
+
+      <!-- Kullanıcı İsim Alanı -->
+      <div id="name-input-section" class="mb-4 hidden">
+        <p class="text-xs text-white/60 mb-2 font-mono">Sıralamaya girmek için isminizi girin:</p>
+        <div class="flex gap-2">
+          <input id="user-name-input" type="text" maxlength="15" placeholder="İsminiz..." class="bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-400 flex-1 font-mono">
+          <button onclick="saveUserName()" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold px-4 py-2 rounded-xl text-xs font-mono">Kaydet</button>
+        </div>
+      </div>
+
+      <!-- Liste Container -->
+      <div id="leaderboard-list" class="flex-1 overflow-y-auto space-y-2 pr-1 font-mono text-xs">
+        <div class="text-center text-white/40 py-8">Yükleniyor...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Global Depo URL */
+    const DB_URL = "https://kvdb.io/4y9X6p1kG9xN7Z3mQ8W2vL/apex_leaderboard";
+
+    /* Cihaz ID & Kullanıcı Durumu */
+    let deviceId = localStorage.getItem('apex_device_id') || crypto.randomUUID();
+    localStorage.setItem('apex_device_id', deviceId);
+
+    let count = parseInt(localStorage.getItem('apex_click_count') || '0');
+    let userName = localStorage.getItem('apex_user_name') || '';
+
+    /* Tıklama Hızı & AutoClicker Mantığı */
+    let clickTimestamps = [];
+    let isBlocked = false;
+
+    /* Web Audio API - Rahatlatıcı Klik Sesi */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playClickSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    /* UI Güncelleme */
+    const counterEl = document.getElementById('counter');
+    counterEl.innerText = count.toLocaleString('tr-TR');
+
+    /* Tıklama Fonksiyonu */
+    function handleClick(e) {
+      if (e) e.preventDefault();
+      if (isBlocked) return;
+
+      const now = Date.now();
+      clickTimestamps.push(now);
+      clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
+
+      // AutoClicker Koruması (> 18 CPS)
+      if (clickTimestamps.length > 18) {
+        isBlocked = true;
+        document.getElementById('warning-box').classList.remove('hidden');
+        setTimeout(() => {
+          isBlocked = false;
+          clickTimestamps = [];
+          document.getElementById('warning-box').classList.add('hidden');
+        }, 5000);
+        return;
+      }
+
+      count++;
+      counterEl.innerText = count.toLocaleString('tr-TR');
+      localStorage.setItem('apex_click_count', count);
+      playClickSound();
+
+      // Hıza Bağlı Parçacık İvmesi
+      particleSpeedMultiplier = Math.min(clickTimestamps.length * 1.5, 12);
+      
+      // Şiddetli Şok Efekti
+      counterEl.style.transform = 'scale(1.08)';
+      setTimeout(() => counterEl.style.transform = 'scale(1)', 50);
+
+      // Buluta Senkronize Et (Debounce)
+      syncToCloud();
+    }
+
+    /* Bulut Senkronizasyonu */
+    let syncTimer = null;
+    function syncToCloud() {
+      if (!userName) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(async () => {
+        try {
+          let list = [];
+          const res = await fetch(DB_URL);
+          if (res.ok) list = await res.json();
+          
+          const index = list.findIndex(item => item.id === deviceId);
+          if (index !== -1) {
+            list[index].score = count;
+            list[index].name = userName;
+          } else {
+            list.push({ id: deviceId, name: userName, score: count });
+          }
+
+          list.sort((a, b) => b.score - a.score);
+          await fetch(DB_URL, { method: 'POST', body: JSON.stringify(list.slice(0, 50)) });
+        } catch (e) {}
+      }, 2000);
+    }
+
+    /* Sıfırlama Dönüşüm Animasyonu */
+    function expandReset() {
+      document.getElementById('reset-init-btn').classList.add('hidden');
+      document.getElementById('reset-confirm-box').classList.remove('hidden');
+    }
+
+    function collapseReset() {
+      document.getElementById('reset-confirm-box').classList.add('hidden');
+      document.getElementById('reset-init-btn').classList.remove('hidden');
+    }
+
+    function confirmReset() {
+      count = 0;
+      counterEl.innerText = "0";
+      localStorage.setItem('apex_click_count', 0);
+      syncToCloud();
+      collapseReset();
+    }
+
+    /* Liderlik Tablosu İşlemleri */
+    function openLeaderboard() {
+      document.getElementById('leaderboard-modal').classList.remove('hidden');
+      if (!userName) {
+        document.getElementById('name-input-section').classList.remove('hidden');
+      } else {
+        document.getElementById('name-input-section').classList.add('hidden');
+      }
+      fetchLeaderboard();
+    }
+
+    function closeLeaderboard() {
+      document.getElementById('leaderboard-modal').classList.add('hidden');
+    }
+
+    function saveUserName() {
+      const val = document.getElementById('user-name-input').value.trim();
+      if (!val) return;
+      userName = val;
+      localStorage.setItem('apex_user_name', userName);
+      document.getElementById('name-input-section').classList.add('hidden');
+      syncToCloud();
+      fetchLeaderboard();
+    }
+
+    async function fetchLeaderboard() {
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = `<div class="text-center text-white/40 py-8">Sıralama taranıyor...</div>`;
+      
+      try {
+        const res = await fetch(DB_URL);
+        if (res.ok) {
+          const list = await res.json();
+          if (list.length === 0) {
+            container.innerHTML = `<div class="text-center text-white/40 py-8">Henüz oyuncu yok. İlk sen ol!</div>`;
+            return;
+          }
+          container.innerHTML = list.map((item, i) => `
+            <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-emerald-500/50 bg-emerald-500/10' : ''}">
+              <div class="flex items-center gap-3">
+                <span class="font-bold ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}">#${i + 1}</span>
+                <span class="text-white font-semibold">${item.name} ${item.id === deviceId ? '(Sen)' : ''}</span>
+              </div>
+              <span class="text-emerald-400 font-bold">${item.score.toLocaleString('tr-TR')}</span>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        container.innerHTML = `<div class="text-center text-red-400 py-8">Bağlantı kurulamadı.</div>`;
+      }
+    }
+
+    /* Tema Değiştirici */
+    function changeTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+    }
+
+    /* CANVAS - Adaptif Uzay Yıldız Simülasyonu */
+    const canvas = document.getElementById('space-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    let stars = Array.from({ length: 150 }, () => ({
+      x: (Math.random() - 0.5) * width * 2,
+      y: (Math.random() - 0.5) * height * 2,
+      z: Math.random() * width
+    }));
+
+    let particleSpeedMultiplier = 1;
+
+    function renderSpace() {
+      ctx.fillStyle = 'rgba(3, 7, 18, 0.3)';
+      ctx.fillRect(0, 0, width, height);
+
+      const cx = width / 2;
+      const cy = height / 2;
+
+      // Hız zamanla normale dönsün
+      particleSpeedMultiplier = Math.max(1, particleSpeedMultiplier * 0.95);
+
+      stars.forEach(s => {
+        s.z -= 2 * particleSpeedMultiplier;
+        if (s.z <= 0) s.z = width;
+
+        const k = 128 / s.z;
+        const px = s.x * k + cx;
+        const py = s.y * k + cy;
+
+        if (px >= 0 && px < width && py >= 0 && py < height) {
+          const size = Math.max(1, (1 - s.z / width) * 3);
+          const alpha = (1 - s.z / width);
+          
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          
+          // Yüksek hızda çizgiye (hız izine) dönüşsün
+          if (particleSpeedMultiplier > 2) {
+            const tailX = (s.x * (128 / (s.z + particleSpeedMultiplier * 8))) + cx;
+            const tailY = (s.y * (128 / (s.z + particleSpeedMultiplier * 8))) + cy;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.lineWidth = size;
+            ctx.moveTo(px, py);
+            ctx.lineTo(tailX, tailY);
+            ctx.stroke();
+          } else {
+            ctx.fillRect(px, py, size, size);
+          }
+        }
+      });
+
+      requestAnimationFrame(renderSpace);
+    }
+
+    renderSpace();
+  </script>
+</body>
+</html>
