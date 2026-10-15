@@ -85,7 +85,7 @@
 
   <script>
     // Kesinlikle ortak havuz için optimize edilmiş global endpoint
-    const DB_URL = "https://kvdb.io/2XN7Z3mQ8W2vL4y9X6p1kG/global_clicker_v3";
+    const DB_URL = "https://kvdb.io/2XN7Z3mQ8W2vL4y9X6p1kG/global_clicker_v4";
     
     let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
     localStorage.setItem('dev_id', deviceId);
@@ -185,6 +185,7 @@
       });
     }
 
+    // Akıllı Veri Birleştirme (Smart Merge) Fonksiyonu
     async function syncData() {
       if (!userName) return;
       try {
@@ -197,6 +198,9 @@
           }
         }
 
+        if (!Array.isArray(list)) list = [];
+
+        // Cihaz ID'sine göre listede var mı kontrol et
         const idx = list.findIndex(i => i.id === deviceId);
         if (idx !== -1) {
           list[idx].score = count;
@@ -204,8 +208,11 @@
         } else {
           list.push({ id: deviceId, name: userName, score: count });
         }
+
+        // Büyükten küçüğe sırala
         list.sort((a, b) => b.score - a.score);
 
+        // Ortak havuza geri kaydet
         await fetch(DB_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
@@ -222,7 +229,7 @@
         const text = await res.text();
         let list = text ? JSON.parse(text) : [];
 
-        if (!list || list.length === 0) {
+        if (!Array.isArray(list) || list.length === 0) {
           container.innerHTML = `<div class="text-center text-white/40 py-8">Henüz kayıt yok. Tıklamaya başla!</div>`;
           return;
         }
