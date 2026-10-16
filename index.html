@@ -3,135 +3,219 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Apex Clicker // Küresel Sıralama</title>
+  <title>Apex Clicker // Küresel Ağ</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Matrix/Terminal Hissi İçin -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
   <style>
-    * { select-none: none; -webkit-user-select: none; box-sizing: border-box; }
-    body { background-color: #000000; color: #ffffff; overflow: hidden; touch-action: manipulation; font-family: system-ui, -apple-system, sans-serif; }
-
-    #space-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
-
-    .glass {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+    * { 
+      user-select: none; 
+      -webkit-user-select: none; 
+      box-sizing: border-box; 
+      font-family: 'Share Tech Mono', monospace; 
+    }
+    
+    body { 
+      background-color: #030a05; /* Çok koyu yeşil-siyah baz */
+      color: #ffffff; 
+      overflow: hidden; 
+      touch-action: manipulation; 
     }
 
-    .click-button {
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(20px);
-      border: 2px solid #22c55e;
-      box-shadow: 0 0 30px rgba(34, 197, 94, 0.2), inset 0 0 15px rgba(34, 197, 94, 0.1);
-      transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.1s ease;
-      transform: scale(1);
+    /* Arka Plan Mesh Gradient (Bulanık, Hareketli Yeşil Tema) */
+    .mesh-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(5, 150, 105, 0.1) 0%, transparent 40%);
+      animation: drift 15s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes drift {
+      0% { transform: scale(1) translate(0px, 0px); }
+      100% { transform: scale(1.1) translate(20px, -20px); }
+    }
+
+    /* Tamamen Saydam Glassmorphism Buton Yapısı */
+    .glass-btn {
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.05), inset 0 0 15px rgba(34, 197, 94, 0.1);
+      transition: transform 0.05s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.1s ease, border 0.1s ease;
+    }
+
+    .glass-btn:active {
+      transform: scale(0.92);
+      border-color: rgba(34, 197, 94, 0.8);
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.2), inset 0 0 20px rgba(34, 197, 94, 0.2);
+    }
+
+    .glass-panel {
+      background: rgba(5, 15, 10, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    /* Dijital Matrix Parlaması */
+    .neon-text {
+      color: #4ade80;
+      text-shadow: 0 0 10px rgba(74, 222, 128, 0.6), 0 0 20px rgba(74, 222, 128, 0.4);
     }
 
     ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.4); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.3); border-radius: 4px; }
   </style>
 </head>
 <body class="w-screen h-screen relative flex flex-col items-center justify-between p-6">
 
-  <canvas id="space-canvas"></canvas>
+  <!-- Animasyonlu Arka Plan -->
+  <div class="mesh-bg"></div>
 
-  <header class="w-full max-w-md flex justify-end z-10">
-    <button onclick="openLeaderboard()" class="glass px-4 py-2.5 rounded-2xl flex items-center gap-2 text-xs font-mono font-bold tracking-wider hover:border-white/30 active:scale-95 transition-all">
-      🏆 <span class="text-green-400">LİDERLİK</span>
+  <header class="w-full max-w-md flex justify-between z-10">
+    <button onclick="copySyncLink()" class="glass-btn px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-bold text-white/70 hover:text-green-400 transition-colors">
+      🔗 <span id="share-text">LİNKİ KOPYALA</span>
+    </button>
+    <button onclick="openLeaderboard()" class="glass-btn px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-bold tracking-wider">
+      🏆 <span class="neon-text text-green-400">LİDERLİK</span>
     </button>
   </header>
 
-  <main class="w-full max-w-md flex flex-col items-center justify-center z-10 my-auto gap-8">
-    <div class="text-center space-y-1">
-      <p class="text-[10px] font-mono uppercase tracking-[0.3em] text-white/40">Toplam Skor</p>
-      <div id="counter" class="text-6xl font-black font-mono tracking-tighter text-green-400" style="text-shadow: 0 0 20px rgba(34, 197, 94, 0.4);">
+  <main class="w-full max-w-md flex flex-col items-center justify-center z-10 my-auto gap-12">
+    <div class="text-center space-y-2">
+      <p class="text-[12px] uppercase tracking-[0.4em] text-green-500/50">AĞ BAĞLANTISI</p>
+      <!-- Dijital Sayaç -->
+      <div id="counter" class="text-7xl font-bold tracking-tighter neon-text transition-all duration-75">
         0
       </div>
     </div>
 
-    <!-- TIKLA Butonu -->
-    <div id="main-btn" onmousedown="handleClick()" ontouchstart="handleClick(event)" class="click-button w-44 h-44 rounded-full flex items-center justify-center cursor-pointer select-none">
-      <span class="text-lg font-mono font-bold tracking-widest text-green-400 pointer-events-none">TIKLA</span>
+    <!-- TIKLA Butonu (Saydam Glass) -->
+    <div onmousedown="handleClick(event)" ontouchstart="handleClick(event)" class="glass-btn w-48 h-48 rounded-full flex items-center justify-center cursor-pointer select-none">
+      <span class="text-2xl font-bold tracking-widest text-green-400 pointer-events-none drop-shadow-md">SİSTEME GİR</span>
     </div>
   </main>
 
-  <div class="w-full max-w-md h-8 z-10"></div>
+  <div class="w-full max-w-md h-8 z-10 text-center">
+    <p id="sync-status" class="text-[10px] text-green-500/30 tracking-widest opacity-0 transition-opacity">VERİ GÜNCELLENDİ</p>
+  </div>
 
   <!-- LİDERLİK TABLOSU MODALI -->
-  <div id="lb-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-    <div class="glass w-full max-w-md p-6 rounded-3xl flex flex-col max-h-[80vh] border border-white/20">
-      <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-        <h3 class="text-sm font-bold font-mono text-green-400 tracking-wider">🏆 KÜRESEL CANLI SIRALAMA</h3>
-        <button onclick="closeLeaderboard()" class="text-white/50 hover:text-white font-mono text-xl">✕</button>
+  <div id="lb-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+    <div class="glass-panel w-full max-w-md p-6 rounded-2xl flex flex-col max-h-[80vh]">
+      <div class="flex justify-between items-center mb-5 pb-3 border-b border-green-500/20">
+        <h3 class="text-sm font-bold text-green-400 tracking-widest neon-text">KÜRESEL VERİTABANI</h3>
+        <button onclick="closeLeaderboard()" class="text-white/40 hover:text-green-400 text-xl transition-colors">✕</button>
       </div>
 
-      <div id="name-box" class="mb-4 hidden">
-        <p class="text-[11px] text-white/60 mb-2 font-mono">Listeye adını yazdır:</p>
+      <div id="name-box" class="mb-5 hidden">
+        <p class="text-[11px] text-green-400/60 mb-2">Ağa kimliğini kaydet:</p>
         <div class="flex gap-2">
-          <input id="user-input" type="text" maxlength="15" placeholder="İsminiz..." class="glass px-3 py-2 text-xs text-white outline-none focus:border-green-400 flex-1 rounded-xl font-mono">
-          <button onclick="saveName()" class="bg-green-500 hover:bg-green-600 text-black font-bold px-4 py-2 rounded-xl text-xs font-mono">Kaydet</button>
+          <input id="user-input" type="text" maxlength="15" placeholder="KOD ADIN..." class="glass-btn px-4 py-2 text-sm text-green-400 outline-none w-full rounded-xl placeholder:text-green-900/50 uppercase">
+          <button onclick="saveName()" class="bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/40 font-bold px-4 py-2 rounded-xl text-xs transition-all">ONAYLA</button>
         </div>
       </div>
 
-      <div id="lb-list" class="flex-1 overflow-y-auto space-y-2 pr-1 font-mono text-xs">
-        <div class="text-center text-white/40 py-8">Yükleniyor...</div>
+      <div id="lb-list" class="flex-1 overflow-y-auto space-y-2 pr-2 text-xs">
+        <div class="text-center text-green-500/40 py-8 animate-pulse">Sinyal Aranıyor...</div>
       </div>
 
-      <div class="mt-3 pt-2 border-t border-white/5 text-center">
-        <span id="countdown-text" class="text-[10px] font-mono text-white/30">Sonraki otomatik yenileme: 10s</span>
+      <div class="mt-4 pt-3 border-t border-green-500/20 text-center flex justify-between items-center">
+        <span class="text-[10px] text-green-500/40" id="device-id-display">ID: Gizli</span>
+        <span id="countdown-text" class="text-[10px] text-green-500/40">YENİLEME: 10s</span>
       </div>
     </div>
   </div>
 
   <script>
-    const DB_URL = "https://jsonbin.org/sino_apex_class_room_v1";
+    // Yepyeni ve Temiz Veritabanı (Eski çöken veriler sıfırlandı)
+    const DB_URL = "https://jsonbin.org/apex_core_matrix_v2";
     
-    let deviceId = localStorage.getItem('dev_id') || crypto.randomUUID();
-    localStorage.setItem('dev_id', deviceId);
-    let count = parseInt(localStorage.getItem('dev_cnt') || '0');
-    let userName = localStorage.getItem('dev_name') || '';
+    // --- AKILLI GÖRÜNMEZ SENKRONİZASYON (SILENT SYNC) MİMARİSİ ---
+    // Eğer URL'de ?sync= gizli anahtarı varsa (Instagram vs. in-app tarayıcıdan girilmişse)
+    const urlParams = new URLSearchParams(window.location.search);
+    const syncToken = urlParams.get('sync');
+    
+    if (syncToken) {
+      // Instagram'da açıldıysa gizlice URL'deki ID'yi emer ve localStorage'a kazır.
+      localStorage.setItem('apex_matrix_id', syncToken);
+      // URL'deki şifreyi temizle ki kullanıcı görüp kafası karışmasın (İz bırakma)
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Cihaz Kimliği: Ya mevcut olan, ya da az önce URL'den emilen, ya da yepyeni oluşturulan kimlik.
+    let deviceId = localStorage.getItem('apex_matrix_id') || crypto.randomUUID();
+    localStorage.setItem('apex_matrix_id', deviceId);
+
+    let count = parseInt(localStorage.getItem('apex_score') || '0');
+    let userName = localStorage.getItem('apex_name') || '';
 
     const counterEl = document.getElementById('counter');
     counterEl.innerText = count.toLocaleString('tr-TR');
 
-    let particleSpeed = 1;
     let countdownTimer = null;
     let secondsLeft = 10;
+    let syncTimeout = null; // Debounce (Gecikmeli Optimizasyon) için
 
+    // Matrix Sinyal Sesi
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound() {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(700, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.04);
-      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+      osc.type = 'square'; // Dijital his için kare dalga
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.05);
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.04);
+      osc.stop(audioCtx.currentTime + 0.05);
     }
 
     function handleClick(e) {
       if (e) e.preventDefault();
       count++;
       counterEl.innerText = count.toLocaleString('tr-TR');
-      localStorage.setItem('dev_cnt', count);
+      counterEl.style.transform = 'scale(1.1)';
+      setTimeout(() => counterEl.style.transform = 'scale(1)', 50);
+      
+      localStorage.setItem('apex_score', count);
       playSound();
-      particleSpeed = 6;
-      syncData();
 
-      const btn = document.getElementById('main-btn');
-      btn.style.transform = 'scale(0.85)';
-      setTimeout(() => {
-        btn.style.transform = 'scale(1)';
-      }, 80);
+      // OPTİMİZASYON: Her tıklamada veritabanına saldırırsak API çöker ve veriler ezilir (Race Condition).
+      // Bunun yerine kullanıcı tıklamayı bıraktıktan 1.5 saniye sonra arkaplanda sessizce tek paket yollar.
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        pushDataToMatrix();
+      }, 1500);
+    }
+
+    // Kullanıcının kişisel senkronizasyon linkini panoya kopyalar
+    function copySyncLink() {
+      const shareUrl = `${window.location.origin}${window.location.pathname}?sync=${deviceId}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        const btnText = document.getElementById('share-text');
+        btnText.innerText = "KOPYALANDI!";
+        btnText.classList.add("text-green-400");
+        setTimeout(() => {
+          btnText.innerText = "LİNKİ KOPYALA";
+          btnText.classList.remove("text-green-400");
+        }, 2000);
+      });
     }
 
     function openLeaderboard() {
       document.getElementById('lb-modal').classList.remove('hidden');
+      document.getElementById('device-id-display').innerText = `ID: ${deviceId.substring(0, 6)}...`;
+      
       if (!userName) {
         document.getElementById('name-box').classList.remove('hidden');
       } else {
@@ -166,52 +250,53 @@
       if (countdownTimer) clearInterval(countdownTimer);
     }
 
-    updateCountdownUI(); // Ek tanım
     function updateCountdownUI() {
       const el = document.getElementById('countdown-text');
-      if (el) el.innerText = `Sonraki otomatik yenileme: ${secondsLeft}s`;
+      if (el) el.innerText = `YENİLEME: ${secondsLeft}s`;
     }
 
     function saveName() {
-      const val = document.getElementById('user-input').value.trim();
+      const val = document.getElementById('user-input').value.trim().toUpperCase();
       if (!val) return;
       userName = val;
-      localStorage.setItem('dev_name', userName);
+      localStorage.setItem('apex_name', userName);
       document.getElementById('name-box').classList.add('hidden');
       
-      syncData().then(() => {
+      pushDataToMatrix().then(() => {
         loadLeaderboard();
-        startTimers();
       });
     }
 
-    // Çelik Zırhlı Akıllı Veri Senkronizasyonu
-    async function syncData() {
-      if (!userName) return;
+    function showSyncStatus() {
+      const statusEl = document.getElementById('sync-status');
+      statusEl.style.opacity = '1';
+      setTimeout(() => statusEl.style.opacity = '0', 2000);
+    }
+
+    // AKILLI VERİTABANI YAZMA İŞLEMİ (Veri Ezilmelerine Karşı Koruma)
+    async function pushDataToMatrix() {
+      if (!userName) return; // İsim yoksa veritabanını kirletme, sadece yerelde tut
       try {
+        // 1. Önce güncel listeyi çek (Başkalarının eklediği skorları kaybetmemek için)
         let list = [];
         const res = await fetch(DB_URL);
         if (res.ok) {
-          const text = await res.text();
-          if (text) {
-            const parsed = JSON.parse(text);
-            if (Array.isArray(parsed)) list = parsed;
-            else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
-          }
+          const parsed = await res.json();
+          if (Array.isArray(parsed)) list = parsed;
+          else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
         }
 
-        if (!Array.isArray(list)) list = [];
-
-        // Varsa güncelle, yoksa ekle
+        // 2. Kendi verini güncelle veya ekle
         const idx = list.findIndex(i => i.id === deviceId);
         if (idx !== -1) {
-          list[idx].score = count;
+          // Eğer yerel skor sunucudakinden büyükse güncelle (Hatalı geri alımları önler)
+          if(count > list[idx].score) list[idx].score = count;
           list[idx].name = userName;
         } else {
           list.push({ id: deviceId, name: userName, score: count });
         }
 
-        // Büyükten küçüğe sırala
+        // 3. Sırala ve sadece temiz halini geri gönder
         list.sort((a, b) => b.score - a.score);
 
         await fetch(DB_URL, {
@@ -219,105 +304,48 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ list: list })
         });
-      } catch (err) {}
+        
+        showSyncStatus();
+      } catch (err) {
+        console.error("Matrix bağlantı hatası", err);
+      }
     }
 
-    // Çelik Zırhlı Liste Okuma ve Ekrana Basma Fonksiyonu
+    // LİSTEYİ GÜVENLİ ÇEKME VE EKRANA BASMA
     async function loadLeaderboard() {
       const container = document.getElementById('lb-list');
-      container.innerHTML = `<div class="text-center text-white/40 py-8">Yükleniyor...</div>`;
       
       try {
         const res = await fetch(DB_URL);
         if (!res.ok) throw new Error();
-        const text = await res.text();
-        let list = [];
+        const parsed = await res.json();
         
-        if (text) {
-          const parsed = JSON.parse(text);
-          if (Array.isArray(parsed)) list = parsed;
-          else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
-        }
+        let list = [];
+        if (Array.isArray(parsed)) list = parsed;
+        else if (parsed.list && Array.isArray(parsed.list)) list = parsed.list;
 
-        if (!Array.isArray(list) || list.length === 0) {
-          container.innerHTML = `<div class="text-center text-white/40 py-8">Henüz kayıt yok. Tıklamaya başla!</div>`;
+        if (list.length === 0) {
+          container.innerHTML = `<div class="text-center text-green-500/40 py-8">AĞDA KİMSE YOK.</div>`;
           return;
         }
 
-        // Listeyi güvenli bir şekilde ekrana çizdir
         container.innerHTML = list.map((item, i) => `
-          <div class="glass p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'}">
+          <div class="glass-btn mb-2 p-3 rounded-xl flex justify-between items-center ${item.id === deviceId ? 'border-green-400 bg-green-500/10 shadow-[0_0_15px_rgba(74,222,128,0.2)]' : 'border-green-500/10 border-transparent'}">
             <div class="flex items-center gap-3">
-              <span class="font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}">#${i + 1}</span>
-              <span class="text-white">${item.name || 'İsimsiz'} ${item.id === deviceId ? '(Sen)' : ''}</span>
+              <span class="font-bold ${i === 0 ? 'text-yellow-400 neon-text' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-green-500/50'}">#${i + 1}</span>
+              <span class="text-green-50 font-bold uppercase tracking-wider">${item.name || 'ANONİM'} ${item.id === deviceId ? '<span class="text-[10px] text-green-400 opacity-70 ml-1">[SEN]</span>' : ''}</span>
             </div>
-            <span class="text-green-400 font-bold">${(item.score || 0).toLocaleString('tr-TR')}</span>
+            <span class="text-green-400 font-bold neon-text">${(item.score || 0).toLocaleString('tr-TR')}</span>
           </div>
         `).join('');
       } catch (e) {
         container.innerHTML = `
           <div class="p-4 text-center space-y-2">
-            <p class="text-white/60 text-xs">Liste yüklenirken sorun oluştu ama skorun güvende.</p>
-            <p class="text-green-400 text-xs font-bold">${userName ? userName + ': ' + count.toLocaleString('tr-TR') : ''}</p>
+            <p class="text-green-500/60 text-xs">AĞ BAĞLANTISI KOPTU.</p>
+            <p class="text-green-400 text-xs font-bold">${userName ? userName + ': ' + count.toLocaleString('tr-TR') : 'LOKAL SKOR: ' + count}</p>
           </div>`;
       }
     }
-
-    const canvas = document.getElementById('space-canvas');
-    const ctx = canvas.getContext('2d');
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
-
-    window.addEventListener('resize', () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    });
-
-    let stars = Array.from({ length: 120 }, () => ({
-      x: (Math.random() - 0.5) * width * 2,
-      y: (Math.random() - 0.5) * height * 2,
-      z: Math.random() * width
-    }));
-
-    function animateSpace() {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, width, height);
-
-      const cx = width / 2;
-      const cy = height / 2;
-
-      particleSpeed = Math.max(1, particleSpeed * 0.95);
-
-      stars.forEach(s => {
-        s.z -= 1.5 * particleSpeed;
-        if (s.z <= 0) { s.z = width; s.x = (Math.random() - 0.5) * width * 2; s.y = (Math.random() - 0.5) * height * 2; }
-
-        const k = 120 / s.z;
-        const px = s.x * k + cx;
-        const py = s.y * k + cy;
-
-        if (px >= 0 && px < width && py >= 0 && py < height) {
-          const size = Math.max(0.5, (1 - s.z / width) * 2);
-          const alpha = (1 - s.z / width);
-
-          if (particleSpeed > 2) {
-            const tailX = (s.x * (120 / (s.z + particleSpeed * 4))) + cx;
-            const tailY = (s.y * (120 / (s.z + particleSpeed * 4))) + cy;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = size;
-            ctx.moveTo(px, py);
-            ctx.lineTo(tailX, tailY);
-            ctx.stroke();
-          } else {
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.fillRect(px, py, size, size);
-          }
-        }
-      });
-      requestAnimationFrame(animateSpace);
-    }
-    animateSpace();
   </script>
 </body>
 </html>
